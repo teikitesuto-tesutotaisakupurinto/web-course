@@ -1,0 +1,2931 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>定期テスト対策プリント運営事務局｜WEB講座</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    font-family:Arial,"Noto Sans JP",sans-serif;
+    background:#f5f6f8;
+    color:#222;
+}
+
+header{
+    height:64px;
+    background:#fff;
+    border-bottom:1px solid #ddd;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 24px;
+}
+
+.brand{
+    font-weight:bold;
+}
+
+.logo{
+    max-width:220px;
+    max-height:44px;
+    object-fit:contain;
+}
+
+main{
+    max-width:1100px;
+    margin:auto;
+    padding:30px 20px;
+}
+
+.screen{
+    display:none;
+}
+
+.screen.active{
+    display:block;
+}
+
+.card{
+    background:#fff;
+    border:1px solid #ddd;
+    border-radius:12px;
+    padding:24px;
+    margin-bottom:20px;
+}
+
+.login{
+    max-width:450px;
+    margin:70px auto;
+}
+
+input,
+textarea,
+select{
+    width:100%;
+    padding:12px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    margin:7px 0 15px;
+}
+
+textarea{
+    min-height:110px;
+    resize:vertical;
+}
+
+button{
+    padding:11px 17px;
+    border-radius:8px;
+    border:1px solid #ccc;
+    background:#fff;
+    cursor:pointer;
+}
+
+button:hover{
+    opacity:.85;
+}
+
+button:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+}
+
+.primary{
+    background:#222;
+    color:#fff;
+    border-color:#222;
+}
+
+.danger{
+    background:#b42318;
+    color:#fff;
+    border-color:#b42318;
+}
+
+.hidden{
+    display:none!important;
+}
+
+.error{
+    background:#fff1f1;
+    color:#a00000;
+    border:1px solid #e0aaaa;
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:15px;
+}
+
+.success{
+    background:#effaf1;
+    color:#216e39;
+    border:1px solid #b8dfc1;
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:15px;
+}
+
+.muted{
+    color:#666;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:18px;
+}
+
+.lesson{
+    padding:16px 0;
+    border-bottom:1px solid #eee;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:15px;
+}
+
+.lesson:last-child{
+    border-bottom:none;
+}
+
+.nav{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:20px;
+}
+
+.actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:15px;
+}
+
+video{
+    width:100%;
+    max-height:75vh;
+    background:#000;
+    border-radius:10px;
+}
+
+.stat{
+    background:#fff;
+    border:1px solid #ddd;
+    border-radius:10px;
+    padding:20px;
+}
+
+.stat strong{
+    display:block;
+    font-size:28px;
+    margin-top:5px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th,
+td{
+    padding:12px;
+    border-bottom:1px solid #eee;
+    text-align:left;
+}
+
+.status{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    background:#fff;
+    border:1px solid #ddd;
+    padding:10px 14px;
+    border-radius:999px;
+    box-shadow:0 5px 20px #0001;
+    z-index:100;
+}
+
+@media(max-width:600px){
+
+    header{
+        padding:0 12px;
+    }
+
+    .brand{
+        font-size:14px;
+    }
+
+    main{
+        padding:20px 12px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+
+<div>
+
+<img
+id="logo"
+class="logo hidden"
+alt="ロゴ">
+
+<span
+id="brand"
+class="brand">
+
+定期テスト対策プリント運営事務局｜WEB講座
+
+</span>
+
+</div>
+
+<button
+id="logoutButton"
+class="hidden"
+onclick="logout()">
+
+ログアウト
+
+</button>
+
+</header>
+
+
+<main>
+
+
+<!-- =========================
+ログイン
+========================= -->
+
+<section
+id="loginScreen"
+class="screen active">
+
+<div class="card login">
+
+<h1>
+WEB講座
+</h1>
+
+<p class="muted">
+メールアドレスとパスワードでログインしてください。
+</p>
+
+<div
+id="loginError"
+class="error hidden">
+</div>
+
+<label>
+メールアドレス
+</label>
+
+<input
+id="email"
+type="email"
+autocomplete="username">
+
+<label>
+パスワード
+</label>
+
+<input
+id="password"
+type="password"
+autocomplete="current-password">
+
+<button
+id="loginButton"
+class="primary"
+style="width:100%;margin-top:10px"
+onclick="login()">
+
+ログイン
+
+</button>
+
+</div>
+
+</section>
+
+
+<!-- =========================
+生徒
+========================= -->
+
+<section
+id="studentScreen"
+class="screen">
+
+<h1>
+WEB講座
+</h1>
+
+<p class="muted">
+受講する講座を選択してください。
+</p>
+
+<div
+id="studentError"
+class="error hidden">
+</div>
+
+<div
+id="studentCourses"
+class="grid">
+</div>
+
+</section>
+
+
+<!-- =========================
+講座
+========================= -->
+
+<section
+id="courseScreen"
+class="screen">
+
+<div class="nav">
+
+<button onclick="goStudent()">
+戻る
+</button>
+
+</div>
+
+<div class="card">
+
+<h1
+id="courseTitle">
+</h1>
+
+<p
+id="courseDescription"
+class="muted">
+</p>
+
+<div
+id="lessonList">
+</div>
+
+</div>
+
+</section>
+
+
+<!-- =========================
+動画
+========================= -->
+
+<section
+id="videoScreen"
+class="screen">
+
+<div class="nav">
+
+<button onclick="goCourse()">
+戻る
+</button>
+
+</div>
+
+<div class="card">
+
+<video
+id="videoPlayer"
+controls
+playsinline
+controlsList="nodownload">
+</video>
+
+<h2
+id="videoTitle">
+</h2>
+
+<h3>
+備考
+</h3>
+
+<p
+id="videoNote"
+style="white-space:pre-wrap">
+</p>
+
+</div>
+
+</section>
+
+
+<!-- =========================
+先生＝管理者
+========================= -->
+
+<section
+id="teacherScreen"
+class="screen">
+
+<h1>
+先生・管理者
+</h1>
+
+<div class="nav">
+
+<button onclick="teacherTab('dashboard')">
+ダッシュボード
+</button>
+
+<button onclick="teacherTab('courses')">
+講座管理
+</button>
+
+<button onclick="teacherTab('users')">
+ユーザー管理
+</button>
+
+<button onclick="teacherTab('notice')">
+アカウント情報通知書
+</button>
+
+<button onclick="teacherTab('settings')">
+サイト設定
+</button>
+
+</div>
+
+
+<!-- ダッシュボード -->
+
+<section id="dashboardTab">
+
+<div class="grid">
+
+<div class="stat">
+生徒数
+<strong id="studentCount">0</strong>
+</div>
+
+<div class="stat">
+講座数
+<strong id="courseCount">0</strong>
+</div>
+
+<div class="stat">
+公開講座
+<strong id="publishedCount">0</strong>
+</div>
+
+<div class="stat">
+動画数
+<strong id="videoCount">0</strong>
+</div>
+
+</div>
+
+</section>
+
+
+<!-- 講座管理 -->
+
+<section
+id="coursesTab"
+class="hidden">
+
+<div class="nav">
+
+<button
+class="primary"
+onclick="createCourse()">
+
+＋ 講座を作成
+
+</button>
+
+</div>
+
+<div
+id="teacherCourses">
+</div>
+
+</section>
+
+
+<!-- ユーザー管理 -->
+
+<section
+id="usersTab"
+class="hidden">
+
+<div class="card">
+
+<div class="nav">
+
+<button
+class="primary"
+onclick="openCreateUser()">
+
+＋ ユーザーを追加
+
+</button>
+
+</div>
+
+<div
+id="userError"
+class="error hidden">
+</div>
+
+<table>
+
+<thead>
+
+<tr>
+
+<th>
+メールアドレス
+</th>
+
+<th>
+権限
+</th>
+
+</tr>
+
+</thead>
+
+<tbody
+id="userTable">
+</tbody>
+
+</table>
+
+</div>
+
+
+<div
+id="createUserBox"
+class="card hidden">
+
+<h3>
+ユーザーを追加
+</h3>
+
+<label>
+メールアドレス
+</label>
+
+<input
+id="newEmail"
+type="email">
+
+<label>
+初期パスワード
+</label>
+
+<input
+id="newPassword"
+type="password">
+
+<label>
+権限
+</label>
+
+<select
+id="newRole">
+
+<option value="student">
+生徒
+</option>
+
+<option value="teacher">
+先生・管理者
+</option>
+
+</select>
+
+<div class="actions">
+
+<button
+class="primary"
+onclick="createUser()">
+
+作成
+
+</button>
+
+<button
+onclick="closeCreateUser()">
+
+キャンセル
+
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+
+<!-- 通知書 -->
+
+<section
+id="noticeTab"
+class="hidden">
+
+<div class="card">
+
+<h2>
+アカウント情報通知書
+</h2>
+
+<select
+id="noticeUser">
+</select>
+
+<button
+class="primary"
+onclick="printNotice()">
+
+通知書を表示・印刷
+
+</button>
+
+</div>
+
+</section>
+
+
+<!-- サイト設定 -->
+
+<section
+id="settingsTab"
+class="hidden">
+
+<div class="card">
+
+<h2>
+サイト設定
+</h2>
+
+<label>
+ロゴ画像
+</label>
+
+<input
+id="logoFile"
+type="file"
+accept="image/*">
+
+<button
+class="primary"
+onclick="uploadLogo()">
+
+ロゴをアップロード
+
+</button>
+
+</div>
+
+</section>
+
+</section>
+
+</main>
+
+
+<div
+id="saveStatus"
+class="status">
+</div>
+
+
+<!-- =========================
+Firebase
+========================= -->
+
+<script type="module">
+
+import {
+initializeApp
+}
+from
+"https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
+
+import {
+getAuth,
+signInWithEmailAndPassword,
+onAuthStateChanged,
+signOut
+}
+from
+"https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+
+import {
+getFirestore,
+collection,
+getDocs,
+getDoc,
+doc,
+addDoc,
+setDoc,
+deleteDoc,
+serverTimestamp,
+query,
+where
+}
+from
+"https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+
+import {
+getFunctions,
+httpsCallable
+}
+from
+"https://www.gstatic.com/firebasejs/12.1.0/firebase-functions.js";
+
+
+const firebaseConfig = {
+
+apiKey:
+"AIzaSyCDDFw2tipCJs_k00E5txFrCW7bVsgJ3O8",
+
+authDomain:
+"web-course-1589c.firebaseapp.com",
+
+projectId:
+"web-course-1589c",
+
+storageBucket:
+"web-course-1589c.firebasestorage.app",
+
+messagingSenderId:
+"175601141864",
+
+appId:
+"1:175601141864:web:ac9092e86c111fa4a053dd"
+
+};
+
+
+const app =
+initializeApp(
+firebaseConfig
+);
+
+
+const auth =
+getAuth(app);
+
+
+const db =
+getFirestore(app);
+
+
+const functions =
+getFunctions(app);
+
+
+const createUserServer =
+httpsCallable(
+functions,
+"createUser"
+);
+
+
+const getCloudinarySignature =
+httpsCallable(
+functions,
+"getCloudinaryUploadSignature"
+);
+
+
+let courses = [];
+
+let users = [];
+
+let currentCourse = null;
+
+let currentUser = null;
+
+
+/* 共通 */
+
+function $(id){
+
+return document.getElementById(id);
+
+}
+
+
+function showOnly(id){
+
+document
+.querySelectorAll(".screen")
+.forEach(
+screen =>
+screen.classList.remove("active")
+);
+
+$(id)
+.classList
+.add("active");
+
+window.scrollTo(0,0);
+
+}
+
+
+function status(message){
+
+$("saveStatus")
+.textContent =
+message;
+
+}
+
+
+/* ログイン */
+
+async function login(){
+
+const email =
+$("email")
+.value
+.trim();
+
+const password =
+$("password")
+.value;
+
+
+$("loginError")
+.classList
+.add("hidden");
+
+
+if(!email || !password){
+
+$("loginError")
+.textContent =
+"メールアドレスとパスワードを入力してください。";
+
+$("loginError")
+.classList
+.remove("hidden");
+
+return;
+
+}
+
+
+$("loginButton")
+.disabled = true;
+
+
+try{
+
+await signInWithEmailAndPassword(
+auth,
+email,
+password
+);
+
+}
+
+catch(error){
+
+$("loginError")
+.textContent =
+"メールアドレスまたはパスワードが正しくありません。";
+
+$("loginError")
+.classList
+.remove("hidden");
+
+}
+
+finally{
+
+$("loginButton")
+.disabled = false;
+
+}
+
+}
+
+
+/* 権限 */
+
+async function getRole(uid){
+
+try{
+
+const snap =
+await getDoc(
+doc(
+db,
+"users",
+uid
+)
+);
+
+
+if(
+snap.exists() &&
+snap.data().role === "teacher"
+){
+
+return "teacher";
+
+}
+
+}
+
+catch(error){
+
+console.error(error);
+
+}
+
+return "student";
+
+}
+
+
+/* 認証状態 */
+
+onAuthStateChanged(
+auth,
+async user => {
+
+if(!user){
+
+currentUser = null;
+
+$("logoutButton")
+.classList
+.add("hidden");
+
+showOnly(
+"loginScreen"
+);
+
+return;
+
+}
+
+
+currentUser = user;
+
+$("logoutButton")
+.classList
+.remove("hidden");
+
+
+const role =
+await getRole(
+user.uid
+);
+
+
+if(role === "teacher"){
+
+showOnly(
+"teacherScreen"
+);
+
+await loadTeacherData();
+
+teacherTab(
+"dashboard"
+);
+
+}else{
+
+showOnly(
+"studentScreen"
+);
+
+await loadStudentData();
+
+}
+
+}
+);
+
+
+/* ログアウト */
+
+async function logout(){
+
+await signOut(
+auth
+);
+
+}
+
+
+/* 生徒データ */
+
+async function loadStudentData(){
+
+try{
+
+const q =
+query(
+collection(
+db,
+"courses"
+),
+where(
+"published",
+"==",
+true
+)
+);
+
+
+const snapshot =
+await getDocs(q);
+
+
+courses =
+snapshot.docs.map(
+d => ({
+id:d.id,
+...d.data()
+})
+);
+
+
+renderStudentCourses();
+
+}
+
+catch(error){
+
+$("studentError")
+.textContent =
+"講座を読み込めませんでした。";
+
+$("studentError")
+.classList
+.remove("hidden");
+
+}
+
+}
+
+
+/* 生徒 */
+
+function renderStudentCourses(){
+
+const box =
+$("studentCourses");
+
+box.innerHTML = "";
+
+
+if(!courses.length){
+
+box.innerHTML =
+'<div class="card">公開中の講座はありません。</div>';
+
+return;
+
+}
+
+
+courses.forEach(
+course => {
+
+const card =
+document.createElement(
+"div"
+);
+
+card.className =
+"card";
+
+
+const h =
+document.createElement(
+"h2"
+);
+
+h.textContent =
+course.title;
+
+
+const p =
+document.createElement(
+"p"
+);
+
+p.className =
+"muted";
+
+p.textContent =
+course.description || "";
+
+
+const n =
+document.createElement(
+"p"
+);
+
+n.textContent =
+(course.lessonCount || 0)
++
+"動画";
+
+
+const button =
+document.createElement(
+"button"
+);
+
+button.className =
+"primary";
+
+button.textContent =
+"講座を見る";
+
+button.onclick =
+() =>
+openCourse(
+course.id
+);
+
+
+card.append(
+h,
+p,
+n,
+button
+);
+
+
+box.appendChild(
+card
+);
+
+}
+);
+
+}
+
+
+async function showStudent(){
+
+showOnly(
+"studentScreen"
+);
+
+await loadStudentData();
+
+}
+
+
+function goStudent(){
+
+showStudent();
+
+}
+
+
+/* 講座 */
+
+async function openCourse(id){
+
+currentCourse =
+courses.find(
+c =>
+c.id === id
+);
+
+
+if(!currentCourse){
+
+alert(
+"講座を読み込めませんでした。"
+);
+
+return;
+
+}
+
+
+$("courseTitle")
+.textContent =
+currentCourse.title;
+
+
+$("courseDescription")
+.textContent =
+currentCourse.description || "";
+
+
+const list =
+$("lessonList");
+
+list.innerHTML =
+"<p>読み込み中...</p>";
+
+
+try{
+
+const snapshot =
+await getDocs(
+query(
+collection(
+db,
+"courses",
+id,
+"lessons"
+),
+where(
+"published",
+"==",
+true
+)
+)
+);
+
+
+const lessons =
+snapshot.docs
+.map(
+d => ({
+id:d.id,
+...d.data()
+})
+)
+.sort(
+(a,b) =>
+(a.order || 0)
+-
+(b.order || 0)
+);
+
+
+list.innerHTML =
+"";
+
+
+lessons.forEach(
+(lesson,index) => {
+
+const row =
+document.createElement(
+"div"
+);
+
+row.className =
+"lesson";
+
+
+const title =
+document.createElement(
+"span"
+);
+
+title.textContent =
+String(
+index + 1
+)
+.padStart(
+2,
+"0"
+)
++
+" "
++
+lesson.title;
+
+
+const button =
+document.createElement(
+"button"
+);
+
+button.textContent =
+"見る";
+
+button.onclick =
+() =>
+openVideo(
+lesson
+);
+
+
+row.append(
+title,
+button
+);
+
+
+list.appendChild(
+row
+);
+
+}
+);
+
+
+if(!lessons.length){
+
+list.innerHTML =
+'<p class="muted">公開中の動画はありません。</p>';
+
+}
+
+
+showOnly(
+"courseScreen"
+);
+
+}
+
+catch(error){
+
+list.innerHTML =
+'<p class="error">動画一覧を読み込めませんでした。</p>';
+
+showOnly(
+"courseScreen"
+);
+
+}
+
+}
+
+
+function goCourse(){
+
+if(currentCourse){
+
+openCourse(
+currentCourse.id
+);
+
+}
+
+}
+
+
+/* 動画 */
+
+function openVideo(lesson){
+
+$("videoTitle")
+.textContent =
+lesson.title;
+
+
+$("videoNote")
+.textContent =
+lesson.note || "";
+
+
+$("videoPlayer")
+.src =
+lesson.videoUrl;
+
+
+$("videoPlayer")
+.load();
+
+
+showOnly(
+"videoScreen"
+);
+
+}
+
+
+/* 先生 */
+
+async function showTeacher(){
+
+showOnly(
+"teacherScreen"
+);
+
+await loadTeacherData();
+
+teacherTab(
+"dashboard"
+);
+
+}
+
+
+function teacherTab(tab){
+
+[
+"dashboardTab",
+"coursesTab",
+"usersTab",
+"noticeTab",
+"settingsTab"
+]
+.forEach(
+id =>
+$(id)
+.classList
+.add("hidden")
+);
+
+
+const map = {
+
+dashboard:
+"dashboardTab",
+
+courses:
+"coursesTab",
+
+users:
+"usersTab",
+
+notice:
+"noticeTab",
+
+settings:
+"settingsTab"
+
+};
+
+
+$(map[tab])
+.classList
+.remove("hidden");
+
+
+if(tab === "dashboard")
+renderDashboard();
+
+
+if(tab === "courses")
+renderTeacherCourses();
+
+
+if(tab === "users")
+renderUsers();
+
+
+if(tab === "notice")
+renderNoticeUsers();
+
+}
+
+
+/* 管理者データ */
+
+async function loadTeacherData(){
+
+try{
+
+const [
+courseSnapshot,
+userSnapshot,
+settingSnapshot
+]
+=
+await Promise.all([
+
+getDocs(
+collection(
+db,
+"courses"
+)
+),
+
+getDocs(
+collection(
+db,
+"users"
+)
+),
+
+getDoc(
+doc(
+db,
+"settings",
+"site"
+)
+)
+
+]);
+
+
+courses =
+courseSnapshot.docs.map(
+d => ({
+id:d.id,
+...d.data()
+})
+);
+
+
+users =
+userSnapshot.docs.map(
+d => ({
+id:d.id,
+...d.data()
+})
+);
+
+
+if(
+settingSnapshot.exists() &&
+settingSnapshot.data().logoUrl
+){
+
+applyLogo(
+settingSnapshot.data().logoUrl
+);
+
+}
+
+}
+
+catch(error){
+
+alert(
+"管理データを読み込めませんでした。"
+);
+
+}
+
+}
+
+
+/* ダッシュボード */
+
+function renderDashboard(){
+
+$("studentCount")
+.textContent =
+users.filter(
+u =>
+u.role === "student"
+).length;
+
+
+$("courseCount")
+.textContent =
+courses.length;
+
+
+$("publishedCount")
+.textContent =
+courses.filter(
+c =>
+c.published
+).length;
+
+
+$("videoCount")
+.textContent =
+courses.reduce(
+(n,c) =>
+n +
+(c.lessonCount || 0),
+0
+);
+
+}
+
+
+/* 講座保存 */
+
+async function saveCourse(course){
+
+status(
+"保存中..."
+);
+
+
+try{
+
+const data = {
+
+title:
+course.title,
+
+description:
+course.description || "",
+
+published:
+!!course.published,
+
+lessonCount:
+course.lessonCount || 0,
+
+updatedAt:
+serverTimestamp()
+
+};
+
+
+if(
+String(course.id)
+.startsWith("local-")
+){
+
+const ref =
+await addDoc(
+collection(
+db,
+"courses"
+),
+{
+
+...data,
+
+createdAt:
+serverTimestamp()
+
+}
+);
+
+
+course.id =
+ref.id;
+
+}
+
+else{
+
+await setDoc(
+doc(
+db,
+"courses",
+course.id
+),
+data,
+{
+merge:true
+}
+);
+
+}
+
+
+status(
+"自動保存しました。"
+);
+
+}
+
+catch(error){
+
+status(
+"保存できませんでした。"
+);
+
+}
+
+}
+
+
+/* 講座一覧 */
+
+function renderTeacherCourses(){
+
+const box =
+$("teacherCourses");
+
+box.innerHTML =
+"";
+
+
+courses.forEach(
+course => {
+
+const card =
+document.createElement(
+"div"
+);
+
+card.className =
+"card";
+
+
+card.innerHTML = `
+
+<label>
+講座名
+</label>
+
+<input
+class="courseTitle">
+
+<label>
+講座説明
+</label>
+
+<textarea
+class="courseDescription">
+</textarea>
+
+<p
+class="courseState">
+</p>
+
+<div class="actions">
+
+<button
+class="primary">
+動画管理
+</button>
+
+<button>
+公開切替
+</button>
+
+<button
+class="danger">
+削除
+</button>
+
+</div>
+
+<div
+class="lessonManager hidden">
+</div>
+
+`;
+
+
+const title =
+card.querySelector(
+".courseTitle"
+);
+
+const description =
+card.querySelector(
+".courseDescription"
+);
+
+const state =
+card.querySelector(
+".courseState"
+);
+
+
+title.value =
+course.title || "";
+
+
+description.value =
+course.description || "";
+
+
+function updateState(){
+
+state.textContent =
+(course.lessonCount || 0)
++
+"動画 / "
++
+(
+course.published
+?
+"公開中"
+:
+"非公開"
+);
+
+}
+
+
+updateState();
+
+
+title.onchange =
+async () => {
+
+course.title =
+title.value.trim();
+
+await saveCourse(
+course
+);
+
+};
+
+
+description.onchange =
+async () => {
+
+course.description =
+description.value;
+
+await saveCourse(
+course
+);
+
+};
+
+
+const buttons =
+card.querySelectorAll(
+"button"
+);
+
+
+buttons[0].onclick =
+() =>
+toggleLessonManager(
+course,
+card.querySelector(
+".lessonManager"
+)
+);
+
+
+buttons[1].onclick =
+async () => {
+
+course.published =
+!course.published;
+
+updateState();
+
+await saveCourse(
+course
+);
+
+renderDashboard();
+
+};
+
+
+buttons[2].onclick =
+async () => {
+
+if(
+!confirm(
+"この講座を削除しますか？"
+)
+)
+return;
+
+
+try{
+
+await deleteDoc(
+doc(
+db,
+"courses",
+course.id
+)
+);
+
+
+courses =
+courses.filter(
+c =>
+c.id !== course.id
+);
+
+
+renderTeacherCourses();
+
+renderDashboard();
+
+}
+
+catch(error){
+
+alert(
+"削除できませんでした。"
+);
+
+}
+
+};
+
+
+box.appendChild(
+card
+);
+
+}
+);
+
+
+if(!courses.length){
+
+box.innerHTML =
+'<div class="card">講座がありません。</div>';
+
+}
+
+}
+
+
+/* 動画管理 */
+
+async function toggleLessonManager(
+course,
+container
+){
+
+container.classList.toggle(
+"hidden"
+);
+
+
+if(
+container.classList.contains(
+"hidden"
+)
+)
+return;
+
+
+container.innerHTML =
+"<p>読み込み中...</p>";
+
+
+try{
+
+const snapshot =
+await getDocs(
+collection(
+db,
+"courses",
+course.id,
+"lessons"
+)
+);
+
+
+const lessons =
+snapshot.docs
+.map(
+d => ({
+id:d.id,
+...d.data()
+})
+)
+.sort(
+(a,b) =>
+(a.order || 0)
+-
+(b.order || 0)
+);
+
+
+container.innerHTML = `
+
+<hr>
+
+<div class="row">
+
+<h3>
+動画管理
+</h3>
+
+<button
+class="primary">
+＋ 動画を追加
+</button>
+
+</div>
+
+<div
+class="lessonItems">
+</div>
+
+`;
+
+
+const list =
+container.querySelector(
+".lessonItems"
+);
+
+
+container
+.querySelector(
+"button"
+)
+.onclick =
+() =>
+addLesson(
+course,
+container
+);
+
+
+lessons.forEach(
+lesson => {
+
+const box =
+document.createElement(
+"div"
+);
+
+box.className =
+"card";
+
+
+box.innerHTML = `
+
+<label>
+動画タイトル
+</label>
+
+<input
+class="lessonTitle">
+
+<label>
+動画URL
+</label>
+
+<input
+class="lessonUrl">
+
+<label>
+備考
+</label>
+
+<textarea
+class="lessonNote">
+</textarea>
+
+<label>
+公開状態
+</label>
+
+<select
+class="lessonPublished">
+
+<option value="true">
+公開
+</option>
+
+<option value="false">
+非公開
+</option>
+
+</select>
+
+<div class="actions">
+
+<button
+class="primary">
+保存
+</button>
+
+<button
+class="danger">
+削除
+</button>
+
+</div>
+
+`;
+
+
+box.querySelector(
+".lessonTitle"
+)
+.value =
+lesson.title || "";
+
+
+box.querySelector(
+".lessonUrl"
+)
+.value =
+lesson.videoUrl || "";
+
+
+box.querySelector(
+".lessonNote"
+)
+.value =
+lesson.note || "";
+
+
+box.querySelector(
+".lessonPublished"
+)
+.value =
+String(
+lesson.published !== false
+);
+
+
+box.querySelectorAll(
+"button"
+)[0]
+.onclick =
+async () => {
+
+try{
+
+await setDoc(
+doc(
+db,
+"courses",
+course.id,
+"lessons",
+lesson.id
+),
+{
+
+title:
+box.querySelector(
+".lessonTitle"
+).value.trim(),
+
+videoUrl:
+box.querySelector(
+".lessonUrl"
+).value.trim(),
+
+note:
+box.querySelector(
+".lessonNote"
+).value,
+
+published:
+box.querySelector(
+".lessonPublished"
+).value ===
+"true",
+
+order:
+lesson.order || 0,
+
+updatedAt:
+serverTimestamp()
+
+},
+{
+merge:true
+}
+);
+
+
+status(
+"動画を自動保存しました。"
+);
+
+}
+
+catch(error){
+
+alert(
+"動画を保存できませんでした。"
+);
+
+}
+
+};
+
+
+box.querySelectorAll(
+"button"
+)[1]
+.onclick =
+async () => {
+
+if(
+!confirm(
+"この動画を削除しますか？"
+)
+)
+return;
+
+
+try{
+
+await deleteDoc(
+doc(
+db,
+"courses",
+course.id,
+"lessons",
+lesson.id
+)
+);
+
+
+course.lessonCount =
+Math.max(
+0,
+(course.lessonCount || 1)
+-
+1
+);
+
+
+await saveCourse(
+course
+);
+
+
+await toggleLessonManager(
+course,
+container
+);
+
+
+renderDashboard();
+
+}
+
+catch(error){
+
+alert(
+"動画を削除できませんでした。"
+);
+
+}
+
+};
+
+
+list.appendChild(
+box
+);
+
+}
+);
+
+
+if(!lessons.length){
+
+list.innerHTML =
+'<p class="muted">動画がありません。</p>';
+
+}
+
+}
+
+catch(error){
+
+container.innerHTML =
+'<div class="error">動画を読み込めませんでした。</div>';
+
+}
+
+}
+
+
+/* 動画追加 */
+
+async function addLesson(
+course,
+container
+){
+
+const title =
+prompt(
+"動画タイトルを入力してください。"
+);
+
+
+if(!title?.trim())
+return;
+
+
+const url =
+prompt(
+"Cloudinaryの動画URLを入力してください。"
+);
+
+
+if(!url?.trim())
+return;
+
+
+const note =
+prompt(
+"備考を入力してください。"
+)
+||
+"";
+
+
+try{
+
+const order =
+(course.lessonCount || 0)
++
+1;
+
+
+await addDoc(
+collection(
+db,
+"courses",
+course.id,
+"lessons"
+),
+{
+
+title:
+title.trim(),
+
+videoUrl:
+url.trim(),
+
+note:
+note,
+
+published:
+false,
+
+order:
+order,
+
+createdAt:
+serverTimestamp(),
+
+updatedAt:
+serverTimestamp()
+
+}
+);
+
+
+course.lessonCount =
+order;
+
+
+await saveCourse(
+course
+);
+
+
+await toggleLessonManager(
+course,
+container
+);
+
+
+renderTeacherCourses();
+
+renderDashboard();
+
+}
+
+catch(error){
+
+alert(
+"動画を追加できませんでした。"
+);
+
+}
+
+}
+
+
+/* ユーザー */
+
+function renderUsers(){
+
+const body =
+$("userTable");
+
+body.innerHTML =
+"";
+
+
+users.forEach(
+user => {
+
+const row =
+document.createElement(
+"tr"
+);
+
+
+const email =
+document.createElement(
+"td"
+);
+
+email.textContent =
+user.email || "";
+
+
+const role =
+document.createElement(
+"td"
+);
+
+role.textContent =
+user.role === "teacher"
+?
+"先生・管理者"
+:
+"生徒";
+
+
+row.append(
+email,
+role
+);
+
+
+body.appendChild(
+row
+);
+
+}
+);
+
+}
+
+
+function openCreateUser(){
+
+$("createUserBox")
+.classList
+.remove("hidden");
+
+}
+
+
+function closeCreateUser(){
+
+$("createUserBox")
+.classList
+.add("hidden");
+
+}
+
+
+/* ユーザー作成 */
+
+async function createUser(){
+
+const email =
+$("newEmail")
+.value
+.trim();
+
+
+const password =
+$("newPassword")
+.value;
+
+
+const role =
+$("newRole")
+.value;
+
+
+const error =
+$("userError");
+
+
+error.classList
+.add("hidden");
+
+
+if(
+!email ||
+password.length < 6
+){
+
+error.textContent =
+"メールアドレスと6文字以上の初期パスワードを入力してください。";
+
+error.classList
+.remove("hidden");
+
+return;
+
+}
+
+
+try{
+
+const result =
+await createUserServer({
+
+email:
+email,
+
+password:
+password,
+
+role:
+role
+
+});
+
+
+users.push({
+
+id:
+result.data.uid,
+
+email:
+email,
+
+role:
+role
+
+});
+
+
+renderUsers();
+
+renderNoticeUsers();
+
+renderDashboard();
+
+closeCreateUser();
+
+
+$("newEmail").value =
+"";
+
+$("newPassword").value =
+"";
+
+
+status(
+"ユーザーを作成しました。"
+);
+
+}
+
+catch(error){
+
+$("userError")
+.textContent =
+"ユーザーを作成できませんでした。";
+
+$("userError")
+.classList
+.remove("hidden");
+
+}
+
+}
+
+
+/* 通知書 */
+
+function renderNoticeUsers(){
+
+const select =
+$("noticeUser");
+
+select.innerHTML =
+"";
+
+
+users.forEach(
+user => {
+
+const option =
+document.createElement(
+"option"
+);
+
+option.value =
+user.id;
+
+option.textContent =
+user.email;
+
+select.appendChild(
+option
+);
+
+}
+);
+
+}
+
+
+function printNotice(){
+
+const user =
+users.find(
+u =>
+u.id ===
+$("noticeUser").value
+);
+
+
+if(!user)
+return;
+
+
+const w =
+window.open(
+"",
+"_blank"
+);
+
+
+if(!w){
+
+alert(
+"ポップアップがブロックされています。"
+);
+
+return;
+
+}
+
+
+const role =
+user.role === "teacher"
+?
+"先生・管理者"
+:
+"生徒";
+
+
+w.document.write(`
+
+<!doctype html>
+
+<html lang="ja">
+
+<head>
+
+<meta charset="utf-8">
+
+<title>
+アカウント情報通知書
+</title>
+
+<style>
+
+body{
+font-family:Arial,sans-serif;
+padding:50px;
+}
+
+.box{
+max-width:700px;
+border:1px solid #aaa;
+padding:30px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+<h1>
+定期テスト対策プリント運営事務局
+</h1>
+
+<h2>
+WEB講座
+アカウント情報通知書
+</h2>
+
+<p>
+ログインID
+</p>
+
+<strong>
+${escapeHtml(user.email)}
+</strong>
+
+<p>
+権限：
+${role}
+</p>
+
+<p>
+パスワードは安全上表示しません。
+</p>
+
+<button onclick="print()">
+印刷
+</button>
+
+</div>
+
+</body>
+
+</html>
+
+`);
+
+
+w.document.close();
+
+}
+
+
+function escapeHtml(value){
+
+return String(value)
+.replace(
+/[&<>"']/g,
+char => ({
+
+"&":"&amp;",
+"<":"&lt;",
+">":"&gt;",
+'"':"&quot;",
+"'":"&#39;"
+
+})[char]
+);
+
+}
+
+
+/* ロゴ */
+
+async function uploadLogo(){
+
+const file =
+$("logoFile")
+.files[0];
+
+
+if(!file){
+
+alert(
+"ロゴ画像を選択してください。"
+);
+
+return;
+
+}
+
+
+try{
+
+const result =
+(
+await getCloudinarySignature({
+
+resourceType:
+"image",
+
+folder:
+"web-course/logo"
+
+})
+).data;
+
+
+const form =
+new FormData();
+
+
+form.append(
+"file",
+file
+);
+
+
+form.append(
+"api_key",
+result.apiKey
+);
+
+
+form.append(
+"timestamp",
+result.timestamp
+);
+
+
+form.append(
+"signature",
+result.signature
+);
+
+
+form.append(
+"folder",
+result.folder
+);
+
+
+const response =
+await fetch(
+
+`https://api.cloudinary.com/v1_1/${result.cloudName}/image/upload`,
+
+{
+
+method:
+"POST",
+
+body:
+form
+
+}
+
+);
+
+
+if(!response.ok)
+throw new Error();
+
+
+const uploaded =
+await response.json();
+
+
+await setDoc(
+doc(
+db,
+"settings",
+"site"
+),
+{
+
+logoUrl:
+uploaded.secure_url,
+
+updatedAt:
+serverTimestamp()
+
+},
+{
+merge:true
+}
+);
+
+
+applyLogo(
+uploaded.secure_url
+);
+
+
+status(
+"ロゴを保存しました。"
+);
+
+}
+
+catch(error){
+
+alert(
+"ロゴをアップロードできませんでした。"
+);
+
+}
+
+}
+
+
+function applyLogo(url){
+
+if(!url)
+return;
+
+
+$("logo").src =
+url;
+
+
+$("logo")
+.classList
+.remove("hidden");
+
+
+$("brand")
+.classList
+.add("hidden");
+
+}
+
+</script>
+
+</body>
+</html>
