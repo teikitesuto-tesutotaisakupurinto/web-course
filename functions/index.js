@@ -24,103 +24,73 @@ const CLOUDINARY_API_SECRET =
   defineSecret("CLOUDINARY_API_SECRET");
 
 
-/*
-==================================================
-先生・管理者か確認
-==================================================
-*/
+/* ================================
+   先生・管理者チェック
+================================ */
 
 async function requireTeacher(request) {
 
   if (!request.auth) {
-
     throw new HttpsError(
       "unauthenticated",
       "ログインしてください。"
     );
-
   }
 
-  const userDoc =
-    await db
-      .collection("users")
-      .doc(request.auth.uid)
-      .get();
-
+  const userDoc = await db
+    .collection("users")
+    .doc(request.auth.uid)
+    .get();
 
   if (
     !userDoc.exists ||
     userDoc.data().role !== "teacher"
   ) {
-
     throw new HttpsError(
       "permission-denied",
       "先生・管理者のみ利用できます。"
     );
-
   }
-
 }
 
 
-/*
-==================================================
-ユーザー作成
-
-先生・管理者の画面から
-生徒または先生を作成する。
-
-Firebase Authentication
-＋
-Firestore users
-
-を同時に作成。
-==================================================
-*/
+/* ================================
+   ユーザー作成
+================================ */
 
 exports.createUser = onCall(
   async (request) => {
 
     await requireTeacher(request);
 
-
-    const data =
-      request.data || {};
-
+    const data = request.data || {};
 
     const email =
       typeof data.email === "string"
         ? data.email.trim()
         : "";
 
-
     const password =
       typeof data.password === "string"
         ? data.password
         : "";
 
-
-    const role =
-      data.role;
+    const role = data.role;
 
 
     if (!email) {
-
       throw new HttpsError(
         "invalid-argument",
         "メールアドレスを入力してください。"
       );
-
     }
 
 
     if (password.length < 6) {
-
       throw new HttpsError(
         "invalid-argument",
         "パスワードは6文字以上にしてください。"
       );
-
     }
 
 
@@ -128,87 +98,52 @@ exports.createUser = onCall(
       role !== "student" &&
       role !== "teacher"
     ) {
-
       throw new HttpsError(
         "invalid-argument",
         "権限が正しくありません。"
       );
-
     }
 
 
     try {
 
-      /*
-      Firebase Authenticationに
-      アカウント作成
-      */
-
       const newUser =
-        await admin
-          .auth()
-          .createUser({
+        await admin.auth().createUser({
+          email,
+          password
+        });
 
-            email: email,
-
-            password: password
-
-          });
-
-
-      /*
-      Firestoreにもユーザー情報を保存
-      */
 
       await db
         .collection("users")
         .doc(newUser.uid)
         .set({
-
-          email: email,
-
-          role: role,
-
+          email,
+          role,
           createdAt:
-            admin.firestore
-              .FieldValue
-              .serverTimestamp()
-
+            admin.firestore.FieldValue.serverTimestamp()
         });
 
 
       return {
-
         success: true,
-
         uid: newUser.uid,
-
-        email: email,
-
-        role: role
-
+        email,
+        role
       };
 
-    }
+    } catch (error) {
 
-    catch (error) {
-
-      console.error(
-        "createUser error:",
-        error
-      );
-
+      console.error(error);
 
       if (
         error.code ===
         "auth/email-already-exists"
       ) {
-
         throw new HttpsError(
           "already-exists",
           "このメールアドレスは既に登録されています。"
         );
-
       }
 
 
@@ -216,12 +151,10 @@ exports.createUser = onCall(
         error.code ===
         "auth/invalid-email"
       ) {
-
         throw new HttpsError(
           "invalid-argument",
           "メールアドレスが正しくありません。"
         );
-
       }
 
 
@@ -229,51 +162,28 @@ exports.createUser = onCall(
         "internal",
         "ユーザーを作成できませんでした。"
       );
-
     }
-
   }
 );
 
 
-/*
-==================================================
-Cloudinaryアップロード用署名
-
-API Secretはブラウザへ渡さない。
-
-先生
- ↓
-Firebase Functions
- ↓
-Cloudinary署名生成
- ↓
-ブラウザ
- ↓
-Cloudinaryへアップロード
-==================================================
-*/
+/* ================================
+   Cloudinary署名
+================================ */
 
 exports.getCloudinaryUploadSignature =
   onCall(
     {
       secrets: [
-
         CLOUDINARY_CLOUD_NAME,
-
         CLOUDINARY_API_KEY,
-
         CLOUDINARY_API_SECRET
-
       ]
     },
 
     async (request) => {
 
-      await requireTeacher(
-        request
-      );
-
+      await requireTeacher(request);
 
       const data =
         request.data || {};
@@ -291,19 +201,11 @@ exports.getCloudinaryUploadSignature =
           : "web-course/videos";
 
 
-      /*
-      許可するフォルダだけに制限
-      */
-
       if (
-        !folder.startsWith(
-          "web-course/"
-        )
+        !folder.startsWith("web-course/")
       ) {
-
         folder =
           "web-course/videos";
-
       }
 
 
@@ -314,21 +216,12 @@ exports.getCloudinaryUploadSignature =
 
 
       const params = {
-
-        folder:
-          folder,
-
-        timestamp:
-          timestamp
-
+        folder,
+        timestamp
       };
 
 
-      /*
-      Cloudinary署名を生成
-      */
-
-      const signatureBase =
+      const signatureText =
         Object.keys(params)
           .sort()
           .map(
@@ -342,7 +235,7 @@ exports.getCloudinaryUploadSignature =
         crypto
           .createHash("sha1")
           .update(
-            signatureBase +
+            signatureText +
             CLOUDINARY_API_SECRET.value()
           )
           .digest("hex");
@@ -358,17 +251,13 @@ exports.getCloudinaryUploadSignature =
         apiKey:
           CLOUDINARY_API_KEY.value(),
 
-        timestamp:
-          timestamp,
+        timestamp,
 
-        folder:
-          folder,
+        folder,
 
-        signature:
-          signature,
+        signature,
 
-        resourceType:
-          resourceType
+        resourceType
 
       };
 
