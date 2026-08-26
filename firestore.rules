@@ -10,16 +10,15 @@ service cloud.firestore {
 
     function isTeacher() {
       return signedIn()
+        && exists(
+          /databases/$(database)/documents/users/$(request.auth.uid)
+        )
         && get(
           /databases/$(database)/documents/users/$(request.auth.uid)
         ).data.role == "teacher";
     }
 
-
-    /* ユーザー */
-
     match /users/{userId} {
-
       allow read:
         if signedIn()
         && (
@@ -30,9 +29,6 @@ service cloud.firestore {
       allow create, update, delete:
         if isTeacher();
     }
-
-
-    /* 講座 */
 
     match /courses/{courseId} {
 
@@ -46,9 +42,6 @@ service cloud.firestore {
       allow create, update, delete:
         if isTeacher();
     }
-
-
-    /* 動画 */
 
     match /courses/{courseId}/lessons/{lessonId} {
 
@@ -70,18 +63,13 @@ service cloud.firestore {
         if isTeacher();
     }
 
-
-    /* サイト設定 */
-
     match /settings/{settingId} {
 
       allow read:
         if signedIn();
 
-      allow write:
+      allow create, update, delete:
         if isTeacher();
     }
-
   }
-
 }
