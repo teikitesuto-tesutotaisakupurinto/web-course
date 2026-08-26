@@ -18,7 +18,13 @@ service cloud.firestore {
         ).data.role == "teacher";
     }
 
+
+    // =========================
+    // ユーザー
+    // =========================
+
     match /users/{userId} {
+
       allow read:
         if signedIn()
         && (
@@ -29,6 +35,11 @@ service cloud.firestore {
       allow create, update, delete:
         if isTeacher();
     }
+
+
+    // =========================
+    // 講座
+    // =========================
 
     match /courses/{courseId} {
 
@@ -42,6 +53,11 @@ service cloud.firestore {
       allow create, update, delete:
         if isTeacher();
     }
+
+
+    // =========================
+    // 動画
+    // =========================
 
     match /courses/{courseId}/lessons/{lessonId} {
 
@@ -63,6 +79,11 @@ service cloud.firestore {
         if isTeacher();
     }
 
+
+    // =========================
+    // サイト設定
+    // =========================
+
     match /settings/{settingId} {
 
       allow read:
@@ -71,5 +92,7 @@ service cloud.firestore {
       allow create, update, delete:
         if isTeacher();
     }
+
   }
+
 }
