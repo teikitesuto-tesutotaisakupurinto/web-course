@@ -105,6 +105,13 @@ onclick="login()">
 
 </button>
 
+<button
+style="width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:10px"
+onclick="googleLogin()">
+<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px">
+Googleでログイン
+</button>
+
 </div>
 
 </section>
@@ -470,6 +477,8 @@ from
 import {
 getAuth,
 signInWithEmailAndPassword,
+signInWithPopup,
+GoogleAuthProvider,
 onAuthStateChanged,
 signOut
 }
@@ -727,6 +736,25 @@ false;
 
 }
 
+
+
+async function googleLogin(){
+
+const provider = new GoogleAuthProvider();
+
+try{
+
+await signInWithPopup(auth, provider);
+
+}
+catch(error){
+
+console.error(error);
+showError("loginError","Googleログインできませんでした。");
+
+}
+
+}
 
 /* =========================
 認証状態
@@ -2768,6 +2796,9 @@ char => ({
 
 window.login =
 login;
+
+window.googleLogin =
+googleLogin;
 
 window.logout =
 logout;
