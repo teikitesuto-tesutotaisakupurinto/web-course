@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>定期テスト対策プリント運営事務局｜WEB講座</title>
+<link id="siteFavicon" rel="icon" href="data:,">
+<script src="https://unpkg.com/html5-qrcode@2.3.8" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
 
 <style>
 *{box-sizing:border-box}
@@ -314,6 +317,22 @@ th,td{
   font-size:13px;
 }
 
+.video-tools{display:flex;align-items:center;gap:10px;margin:0 0 14px}
+.video-tools label{margin:0;white-space:nowrap}
+.video-tools select{width:auto;min-width:112px}
+.chapter-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chapter-button{text-align:left}
+.chapter-button span{display:block;font-size:12px;color:#68717b}
+.scanner-panel{margin-top:12px}
+#qrReader{max-width:420px;margin:12px auto}
+.guide-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.guide-step{border-left:4px solid #26756c;padding:10px 14px;background:#f3f8f6}
+.guide-step.active{border-color:#d57938;background:#fff7ef}
+.guide-progress{height:6px;background:#e5e8eb;margin:14px 0}
+.guide-progress span{display:block;height:100%;width:0;background:#26756c;transition:width .3s}
+.faq-list details{border-top:1px solid #e1e4e7;padding:14px 0}
+.faq-list summary{font-weight:650;cursor:pointer}
+
 @media(max-width:650px){
   header{
     padding:0 12px;
@@ -363,6 +382,8 @@ th,td{
     onclick="logout()">
     ログアウト
   </button>
+
+  <button onclick="openFaq()" aria-label="よくある質問">FAQ</button>
 
 </header>
 
@@ -419,8 +440,70 @@ th,td{
 
     </button>
 
+    <button
+      style="width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:10px"
+      onclick="googleLogin()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style="width:20px;height:20px">
+      Googleでログイン
+    </button>
+
+    <button
+      style="width:100%;margin-top:10px"
+      onclick="startQrScanner()">
+      QRコードでログイン
+    </button>
+
+    <div id="qrLoginPanel" class="scanner-panel hidden">
+      <p class="muted">通知書のQRコードをカメラに映してください。</p>
+      <div id="qrReader"></div>
+      <button onclick="stopQrScanner()">スキャンを閉じる</button>
+    </div>
+
+    <button
+      class="secondary"
+      style="width:100%;margin-top:10px"
+      onclick="sendPasswordReset()">
+      パスワードを再設定
+    </button>
+
   </div>
 
+</section>
+
+
+<section id="faqScreen" class="screen">
+  <div class="nav"><button onclick="closeFaq()">← 戻る</button></div>
+  <div class="card">
+    <h1>よくある質問</h1>
+    <div class="faq-list">
+      <details><summary>動画が再生できません</summary><p>ページを再読み込みし、通信状態と音量を確認してください。      npx --yes firebase-tools login 4/0AXlqoi7vDWASMWyCKHBRWJF0oKtlOnRKIqmqDQYlJ1nKuYphFBf8-DqYeDkjNg92WV35kg別のネットワークまたは最新のブラウザーをお試しください。</p></details>
+      <details><summary>動画が途中で止まります</summary><p>通信が安定した場所で再生し直してください。講座一覧から該当動画を選ぶと前回の位置から再開できます。</p></details>
+      <details><summary>パスワードを忘れました</summary><p>ログイン画面の「パスワードを再設定」から登録済みメールアドレスへ再設定メールを送信してください。届かない場合は迷惑メールも確認してください。</p></details>
+      <details><summary>QRコードでログインできません</summary><p>QRコードは未使用の場合は期限なく使えます。一度ログインに使うと再利用できないため、使用済みの場合は先生へ新しい通知書を依頼してください。</p></details>
+      <details><summary>チャプターへ移動できません</summary><p>未視聴の箇所へ先に進む操作は制限されています。動画を順番に視聴すると、その範囲のチャプターへ移動できます。</p></details>
+    </div>
+  </div>
+</section>
+
+
+<section id="guidanceScreen" class="screen">
+  <div class="nav"><button onclick="goStudent()">← 講座一覧</button></div>
+  <div class="card">
+    <h1>はじめに受けるガイダンス</h1>
+    <p class="muted">約3分で、講座の選び方・動画の使い方・おすすめの学習手順を案内します。</p>
+    <div id="guidanceMediaContainer" class="hidden"></div>
+    <video id="guidanceVideo" class="hidden" controls playsinline preload="metadata"></video>
+    <div id="guideFallback">
+    <div class="guide-progress"><span id="guideProgress"></span></div>
+    <h2 id="guideTitle">受講を始める前に</h2>
+    <p id="guideNarration" aria-live="polite">再生すると音声と画面で順番にご案内します。音声が利用できない端末では、表示された文章を読んで進められます。</p>
+    <div class="guide-steps" id="guideSteps"></div>
+    <div class="actions">
+      <button class="primary" id="guidePlayButton" onclick="startGuidance()">ガイダンスを再生</button>
+      <button onclick="pauseGuidance()">一時停止</button>
+    </div>
+    </div>
+  </div>
 </section>
 
 
@@ -438,6 +521,7 @@ th,td{
       <p class="muted">
         受講する講座を選択してください。
       </p>
+      <button class="secondary" onclick="openGuidance()">はじめに受けるガイダンス（約3分）</button>
     </div>
   </div>
 
@@ -510,7 +594,21 @@ th,td{
       playsinline>
     </video>
 
+    <div class="video-tools">
+      <label for="playbackRate">再生速度</label>
+      <select id="playbackRate" aria-label="再生速度" onchange="setPlaybackRate(this.value)">
+        <option value="0.75">0.75倍</option>
+        <option value="1" selected>1倍</option>
+        <option value="1.25">1.25倍</option>
+        <option value="1.5">1.5倍</option>
+        <option value="1.75">1.75倍</option>
+        <option value="2">2倍</option>
+      </select>
+      <button onclick="resumeLesson()">続きから再生</button>
+    </div>
+
     <h2 id="videoTitle"></h2>
+    <div id="chapterList" class="chapter-list"></div>
 
     <h3>備考</h3>
 
@@ -549,6 +647,11 @@ th,td{
     <button
       onclick="teacherTab('users')">
       ユーザー管理
+    </button>
+
+    <button
+      onclick="teacherTab('progress')">
+      進捗出力
     </button>
 
     <button
@@ -594,6 +697,56 @@ th,td{
       <div class="stat">
         <span>動画数</span>
         <strong id="videoCount">0</strong>
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- PROGRESS -->
+
+  <section
+    id="progressTab"
+    class="hidden">
+
+    <div class="card">
+
+      <div class="row">
+
+        <h2>受講進捗</h2>
+
+        <button
+          class="primary"
+          onclick="exportProgressCsv()">
+          CSVを出力
+        </button>
+
+      </div>
+
+      <label for="progressGroup">集計単位</label>
+      <select id="progressGroup" onchange="renderProgressReport()">
+        <option value="className">クラスごと</option>
+        <option value="grade">学年ごと</option>
+        <option value="course">講座ごと</option>
+      </select>
+
+      <p class="muted">動画を再生した生徒の視聴状況を集計します。動画の最後まで再生すると完了になります。</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th id="progressGroupHeading">クラス</th>
+              <th>生徒数</th>
+              <th>完了動画</th>
+              <th>視聴中</th>
+              <th>対象動画</th>
+              <th>完了率</th>
+            </tr>
+          </thead>
+          <tbody id="progressTable"></tbody>
+        </table>
       </div>
 
     </div>
@@ -666,8 +819,13 @@ th,td{
           <thead>
 
             <tr>
+              <th>氏名</th>
               <th>メールアドレス</th>
+              <th>学年</th>
+              <th>クラス</th>
               <th>権限</th>
+              <th>状態</th>
+              <th>操作</th>
             </tr>
 
           </thead>
@@ -747,6 +905,7 @@ th,td{
 
         <button
           class="primary"
+          id="saveLogoButton"
           onclick="saveLogoPreview()">
 
           ロゴを反映
@@ -756,9 +915,19 @@ th,td{
       </div>
 
       <p class="muted">
-        現在はブラウザ上のプレビューです。
-        Cloudinaryへの永続保存はFunctions接続後に有効化します。
+        ロゴは公開設定として保存され、ログイン画面とfaviconにも反映されます。
       </p>
+
+      <hr>
+
+      <label for="guidanceVideoUrl">ガイダンス動画のURL</label>
+      <input
+        id="guidanceVideoUrl"
+        type="url"
+        placeholder="https://.../video.mp4  または Canva 公開URL">
+      <div class="actions">
+        <button class="primary" onclick="saveGuidanceVideoUrl()">動画URLを保存</button>
+      </div>
 
     </div>
 
@@ -816,6 +985,14 @@ th,td{
       id="courseFormDescription"
       placeholder="講座の説明を入力してください。">
     </textarea>
+
+    <label for="courseFormTargets">配信するクラス</label>
+    <select id="courseFormTargets" multiple size="5"></select>
+    <p class="muted">複数選択できます。未選択の場合は全クラスに配信します。</p>
+
+    <label for="courseFormStudents">配信する生徒</label>
+    <select id="courseFormStudents" multiple size="5"></select>
+    <p class="muted">生徒を指定した場合、その生徒またはクラスのいずれかに一致した人に配信します。</p>
 
     <label>
       公開状態
@@ -884,7 +1061,7 @@ th,td{
     </div>
 
     <p class="muted">
-      Firebase Functionsを接続すると、このフォームからAuthenticationユーザーを作成できます。
+      新規アカウントとプロフィールを登録します。
     </p>
 
     <label>
@@ -895,6 +1072,18 @@ th,td{
       id="userFormName"
       type="text"
       placeholder="例：山田 太郎">
+
+    <label>学年</label>
+    <input
+      id="userFormGrade"
+      type="text"
+      placeholder="例：中学2年">
+
+    <label>クラス</label>
+    <input
+      id="userFormClass"
+      type="text"
+      placeholder="例：2組">
 
     <label>
       メールアドレス
@@ -970,6 +1159,10 @@ from
 import {
   getAuth,
   signInWithEmailAndPassword,
+  signInWithPopup,
+  signInWithCustomToken,
+  sendPasswordResetEmail,
+  GoogleAuthProvider,
   onAuthStateChanged,
   signOut
 }
@@ -982,6 +1175,7 @@ import {
   collection,
   getDocs,
   getDoc,
+  onSnapshot,
   doc,
   addDoc,
   setDoc,
@@ -992,6 +1186,13 @@ import {
 }
 from
 "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
+
+import {
+  getFunctions,
+  httpsCallable
+}
+from
+"https://www.gstatic.com/firebasejs/12.1.0/firebase-functions.js";
 
 
 /* ==========================================
@@ -1034,6 +1235,9 @@ const auth =
 const db =
   getFirestore(app);
 
+const functions =
+  getFunctions(app);
+
 
 /* ==========================================
 状態
@@ -1052,6 +1256,51 @@ let users =
   [];
 
 let currentCourse =
+  null;
+
+let currentClassName =
+  "";
+
+let currentGrade =
+  "";
+
+let studentProgress =
+  [];
+
+let teacherProgress =
+  [];
+
+let publishedLessonCounts =
+  {};
+
+let activeLessonProgress =
+  null;
+
+let lastProgressReport =
+  [];
+
+let currentScreenBeforeFaq =
+  "loginScreen";
+
+let qrScanner =
+  null;
+
+let qrScanBusy =
+  false;
+
+let guidanceIndex =
+  0;
+
+let guidanceTimer =
+  null;
+
+let guidanceRunning =
+  false;
+
+let guidanceVideoUrl =
+  "";
+
+let profileUnsubscribe =
   null;
 
 
@@ -1114,6 +1363,9 @@ function showError(
 
   element.textContent =
     message;
+
+  element.classList.remove("success");
+  element.classList.add("error");
 
 
   element
@@ -1246,6 +1498,258 @@ async function login(){
 }
 
 
+async function googleLogin(){
+
+  clearError("loginError");
+
+  try{
+    await signInWithPopup(
+      auth,
+      new GoogleAuthProvider()
+    );
+  }
+  catch(error){
+    console.error(error);
+    showError("loginError", "Googleログインできませんでした。");
+  }
+
+}
+
+
+async function redeemQrLogin(value){
+
+  const ticket = (() => {
+    try{
+      const scannedUrl = new URL(value, location.origin);
+      if(scannedUrl.searchParams.has("qrLogin")){
+        if(scannedUrl.origin !== location.origin)
+          throw new Error("別のサイトのQRコードです。");
+        return scannedUrl.searchParams.get("qrLogin");
+      }
+    }
+    catch(error){
+      if(error.message === "別のサイトのQRコードです。")
+        throw error;
+    }
+    return value;
+  })();
+
+  const redeem = httpsCallable(functions, "redeemQrLogin");
+  const response = await redeem({ ticket });
+  await signInWithCustomToken(auth, response.data.customToken);
+  history.replaceState({}, "", location.pathname);
+
+}
+
+
+async function startQrScanner(){
+
+  clearError("loginError");
+  if(!window.Html5Qrcode){
+    showError("loginError", "QR読み取りライブラリを読み込めませんでした。");
+    return;
+  }
+
+  $("qrLoginPanel").classList.remove("hidden");
+  try{
+    qrScanner = new Html5Qrcode("qrReader");
+    await qrScanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 240, height: 240 } },
+      async decodedText => {
+        if(qrScanBusy)
+          return;
+        qrScanBusy = true;
+        try{
+          await stopQrScanner();
+          await redeemQrLogin(decodedText);
+        }
+        catch(error){
+          console.error("QRログインエラー", error);
+          showError("loginError", error.message || "QRコードでログインできませんでした。");
+          qrScanBusy = false;
+        }
+      },
+      () => {}
+    );
+  }
+  catch(error){
+    console.error("QRカメラ起動エラー", error);
+    await stopQrScanner();
+    showError("loginError", "カメラを起動できません。ブラウザーのカメラ使用を許可してください。");
+  }
+
+}
+
+
+async function stopQrScanner(){
+
+  if(qrScanner){
+    try{
+      if(qrScanner.isScanning)
+        await qrScanner.stop();
+      qrScanner.clear();
+    }
+    catch(error){
+      console.warn("QRスキャナー停止エラー", error);
+    }
+    qrScanner = null;
+  }
+  $("qrLoginPanel").classList.add("hidden");
+
+}
+
+
+async function sendPasswordReset(){
+
+  const email = $("loginEmail").value.trim();
+  if(!email){
+    showError("loginError", "先にメールアドレスを入力してください。");
+    $("loginEmail").focus();
+    return;
+  }
+
+  try{
+    await sendPasswordResetEmail(auth, email);
+    showError("loginError", "パスワード再設定メールを送信しました。メールをご確認ください。");
+    $("loginError").classList.remove("error");
+    $("loginError").classList.add("success");
+  }
+  catch(error){
+    console.error("再設定メール送信エラー", error);
+    showError("loginError", "再設定メールを送信できませんでした。メールアドレスを確認してください。");
+  }
+
+}
+
+
+function openFaq(){
+  currentScreenBeforeFaq = document.querySelector(".screen.active")?.id || "loginScreen";
+  showScreen("faqScreen");
+}
+
+
+function closeFaq(){
+  showScreen(currentScreenBeforeFaq);
+}
+
+
+const guidanceSteps = [
+  {
+    title: "1. 講座を選ぶ",
+    text: "ログイン後の一覧には、先生があなたのクラスに配信した講座が表示されます。まず受講する講座を選び、説明を読んでから動画一覧を開きましょう。授業で扱った単元や、今取り組んでいる課題に近い講座から始めると、学習内容をつなげやすくなります。迷ったときは、学校や先生から案内された順番を優先してください。"
+  },
+  {
+    title: "2. 視聴前に目標を決める",
+    text: "動画を再生する前に、今日は何を説明できるようになりたいかを一つ決めます。たとえば、公式を使う場面を見分ける、問題の最初の一手を説明する、重要語句を自分の言葉で言い直す、など具体的にしましょう。短い目標にすると、見終わったあとに達成できたか確かめやすくなります。"
+  },
+  {
+    title: "3. 自分のペースで視聴する",
+    text: "動画プレーヤーでは再生速度を選べます。初めて学ぶ内容は標準速度で全体をつかみ、理解できた説明は少し速く、難しい箇所は一時停止してノートを取りながら見ましょう。動画は前回の続きから再開できます。チャプターは視聴済みの範囲まで選べるので、未視聴部分を飛ばさず順番に学習してください。"
+  },
+  {
+    title: "4. 見るだけで終わらせない",
+    text: "説明を聞いたら一度動画を止め、ノートを閉じて内容を思い出します。解き方の理由、使った公式、間違えやすい点を自分の言葉で書いてみましょう。途中の例題は動画を止めて先に解き、答えだけでなく考え方も比べます。思い出せなかった箇所はチャプターから見直し、もう一度自力で説明できるか確認してください。"
+  },
+  {
+    title: "5. 問題で確かめる",
+    text: "動画のあとには、同じ単元の問題を何も見ずに解きます。正解したかだけでなく、どこで迷ったか、どの知識を使ったかを記録しましょう。間違えた問題は、解説を読んで終わりにせず、少し時間を置いてもう一度解きます。答えにたどり着く手順を説明できれば、内容が身についているかをより確かに確認できます。"
+  },
+  {
+    title: "6. 次の学習につなげる",
+    text: "最後に、今日の目標を達成できたかを振り返り、次に取り組むことを一つ決めます。完了した動画は先生側の進捗にも反映されます。途中で終えると視聴位置が保存され、次回は続きから再開できます。再生できない、ログインできないなど困ったことがあれば、画面上部のよくある質問を確認してください。準備ができたら、講座一覧から学習を始めましょう。"
+  }
+];
+
+
+function openGuidance(){
+  pauseGuidance();
+  guidanceIndex = 0;
+  renderGuidanceStep();
+  if(guidanceVideoUrl){
+    $("guidanceVideo").currentTime = 0;
+    $("guidanceVideo").pause();
+  }
+  showScreen("guidanceScreen");
+}
+
+
+function renderGuidanceStep(){
+  const step = guidanceSteps[guidanceIndex];
+  if(!step)
+    return;
+  $("guideTitle").textContent = step.title;
+  $("guideNarration").textContent = step.text;
+  $("guideProgress").style.width = `${(guidanceIndex + 1) / guidanceSteps.length * 100}%`;
+  $("guideSteps").textContent = `全${guidanceSteps.length}項目中 ${guidanceIndex + 1}項目`;
+}
+
+
+function startGuidance(){
+  if(guidanceRunning)
+    return;
+  guidanceRunning = true;
+
+  if(!("speechSynthesis" in window)){
+    guidanceTimer = setTimeout(advanceGuidance, 30000);
+    return;
+  }
+
+  if(window.speechSynthesis.paused){
+    window.speechSynthesis.resume();
+    return;
+  }
+
+  const step = guidanceSteps[guidanceIndex];
+  if(!step){
+    guidanceRunning = false;
+    return;
+  }
+
+  const utterance = new SpeechSynthesisUtterance(step.text);
+  utterance.lang = "ja-JP";
+  utterance.rate = 0.9;
+  utterance.onend = advanceGuidance;
+  utterance.onerror = () => {
+    const wasRunning = guidanceRunning;
+    guidanceRunning = false;
+    if(wasRunning)
+      status("音声を再生できません。表示された文章を読んで進めてください。");
+  };
+  window.speechSynthesis.speak(utterance);
+}
+
+
+function advanceGuidance(){
+  guidanceIndex += 1;
+  if(guidanceIndex >= guidanceSteps.length){
+    guidanceRunning = false;
+    guidanceIndex = guidanceSteps.length - 1;
+    $("guideTitle").textContent = "ガイダンスは以上です";
+    $("guideNarration").textContent = "講座一覧から受講を始めてください。";
+    $("guideProgress").style.width = "100%";
+    return;
+  }
+
+  renderGuidanceStep();
+  if("speechSynthesis" in window){
+    guidanceRunning = false;
+    startGuidance();
+  }
+  else{
+    guidanceTimer = setTimeout(advanceGuidance, 30000);
+  }
+}
+
+
+function pauseGuidance(){
+  guidanceRunning = false;
+  clearTimeout(guidanceTimer);
+  if("speechSynthesis" in window)
+    window.speechSynthesis.cancel();
+}
+
+
 /* ==========================================
 認証状態
 ========================================== */
@@ -1256,11 +1760,22 @@ onAuthStateChanged(
 
     if(!user){
 
+      if(profileUnsubscribe){
+        profileUnsubscribe();
+        profileUnsubscribe = null;
+      }
+
       currentUser =
         null;
 
       currentRole =
         null;
+
+      currentClassName =
+        "";
+
+      currentGrade =
+        "";
 
 
       $("logoutButton")
@@ -1314,11 +1829,28 @@ onAuthStateChanged(
         );
 
 
-      if(
-        userDoc.exists() &&
-        userDoc.data().role ===
-        "teacher"
-      ){
+      const profile =
+        userDoc.exists()
+          ? userDoc.data()
+          : {};
+
+      currentClassName =
+        typeof profile.className === "string"
+          ? profile.className.trim()
+          : "";
+
+      currentGrade =
+        typeof profile.grade === "string"
+          ? profile.grade.trim()
+          : "";
+
+      if(profile.disabled === true){
+        showError("loginError", "このアカウントは停止されています。管理者へお問い合わせください。");
+        await signOut(auth);
+        return;
+      }
+
+      if(profile.role === "teacher"){
 
         currentRole =
           "teacher";
@@ -1352,6 +1884,25 @@ onAuthStateChanged(
 
     }
 
+    if(profileUnsubscribe)
+      profileUnsubscribe();
+
+    profileUnsubscribe = onSnapshot(
+      doc(db, "users", user.uid),
+      snapshot => {
+        if(!snapshot.exists() || snapshot.data().disabled !== true)
+          return;
+
+        const player = $("videoPlayer");
+        player.pause();
+        player.removeAttribute("src");
+        player.load();
+        showError("loginError", "このアカウントは停止されました。管理者へお問い合わせください。");
+        signOut(auth).catch(error => console.error("停止時ログアウトエラー", error));
+      },
+      error => console.error("アカウント状態監視エラー", error)
+    );
+
 
     /*
     権限に応じて画面変更
@@ -1382,6 +1933,7 @@ onAuthStateChanged(
         "studentScreen"
       );
 
+      await loadManual();
 
       await loadStudentData();
 
@@ -1457,7 +2009,24 @@ async function loadStudentData(){
           ...document.data()
 
         })
-      );
+      )
+      .filter(course => {
+        const targetClasses =
+          Array.isArray(course.targetClasses)
+            ? course.targetClasses
+            : [];
+
+        const targetStudents =
+          Array.isArray(course.targetStudents)
+            ? course.targetStudents
+            : [];
+
+        return (
+          (targetClasses.length === 0 && targetStudents.length === 0)
+          || targetClasses.includes(currentClassName)
+          || targetStudents.includes(currentUser?.uid || "")
+        );
+      });
 
 
     renderStudentCourses();
@@ -1663,6 +2232,20 @@ async function openCourse(
         )
       );
 
+    const progressSnapshot =
+      await getDocs(
+        query(
+          collection(db, "progress"),
+          where("userId", "==", currentUser.uid)
+        )
+      );
+
+    studentProgress =
+      progressSnapshot.docs.map(document => ({
+        id: document.id,
+        ...document.data()
+      })).filter(item => item.courseId === courseId);
+
 
     const lessons =
       snapshot.docs
@@ -1737,16 +2320,24 @@ async function openCourse(
             "button"
           );
 
+        const savedProgress = studentProgress.find(item =>
+          item.lessonId === lesson.id
+        );
+        button.textContent = savedProgress?.completed
+          ? "もう一度見る"
+          : Number(savedProgress?.lastPositionSeconds) > 0
+            ? "続きから"
+            : "見る";
 
-        button.textContent =
-          "見る";
 
-
-        button.onclick =
-          () =>
-          openVideo(
-            lesson
-          );
+        button.onclick = () => {
+          const resumeAvailable =
+            !savedProgress?.completed &&
+            Number(savedProgress?.lastPositionSeconds) > 0;
+          openVideo(lesson);
+          if(resumeAvailable)
+            $("videoPlayer").play().catch(() => {});
+        };
 
 
         row.append(
@@ -1811,6 +2402,85 @@ function openVideo(
   const player =
     $("videoPlayer");
 
+  const savedProgress =
+    studentProgress.find(item =>
+      item.lessonId === lesson.id
+    );
+
+  activeLessonProgress = {
+    lessonId: lesson.id,
+    watchedSeconds: savedProgress?.watchedSeconds || 0,
+    lastPositionSeconds: savedProgress?.lastPositionSeconds || 0,
+    furthestWatchedSeconds: savedProgress?.furthestWatchedSeconds || 0,
+    completed: savedProgress?.completed || false,
+    lastTime: null,
+    lastSavedAt: 0
+  };
+
+  player.ontimeupdate = () => {
+    if(!activeLessonProgress)
+      return;
+
+    const currentTime = player.currentTime;
+    const previousTime = activeLessonProgress.lastTime;
+
+    if(
+      previousTime !== null &&
+      currentTime > previousTime &&
+      currentTime - previousTime <= 15
+    ){
+      activeLessonProgress.watchedSeconds +=
+        currentTime - previousTime;
+      activeLessonProgress.furthestWatchedSeconds = Math.max(
+        activeLessonProgress.furthestWatchedSeconds,
+        currentTime
+      );
+    }
+
+    activeLessonProgress.lastTime = currentTime;
+    activeLessonProgress.lastPositionSeconds = currentTime;
+
+    if(Date.now() - activeLessonProgress.lastSavedAt >= 10000){
+      activeLessonProgress.lastSavedAt = Date.now();
+      saveLessonProgress(false);
+    }
+  };
+
+  player.onended = () => saveLessonProgress(true);
+  player.onpause = () => saveLessonProgress(false);
+  player.onseeking = () => {
+    if(
+      !activeLessonProgress.completed &&
+      player.currentTime > activeLessonProgress.furthestWatchedSeconds + 1
+    ){
+      player.currentTime = activeLessonProgress.furthestWatchedSeconds;
+      activeLessonProgress.lastPositionSeconds = player.currentTime;
+      activeLessonProgress.lastTime = player.currentTime;
+      status("未視聴の位置へは先に進めません。チャプターも順番に視聴してください。");
+    }
+  };
+
+  player.onloadedmetadata = () => {
+    if(activeLessonProgress.lessonId !== lesson.id)
+      return;
+
+    const resumeAt = savedProgress?.completed
+      ? 0
+      : Math.min(
+          Number(savedProgress?.lastPositionSeconds) || 0,
+          Number(savedProgress?.furthestWatchedSeconds) || 0
+        );
+    player.currentTime = resumeAt;
+    activeLessonProgress.lastTime = resumeAt;
+    activeLessonProgress.lastPositionSeconds = resumeAt;
+    renderChapters(lesson);
+  };
+
+  const savedRate = Number(localStorage.getItem("webCoursePlaybackRate")) || 1;
+  $("playbackRate").value = String(savedRate);
+  player.playbackRate = savedRate;
+  renderChapters(lesson);
+
 
   player.src =
     lesson.videoUrl;
@@ -1826,6 +2496,154 @@ function openVideo(
 }
 
 
+async function saveLessonProgress(completed){
+
+  if(
+    !currentUser ||
+    !currentCourse ||
+    !activeLessonProgress
+  )
+    return;
+
+  const player = $("videoPlayer");
+  const lessonTitle = $("videoTitle").textContent;
+  if(completed)
+    activeLessonProgress.completed = true;
+  const progressId = [
+    currentUser.uid,
+    currentCourse.id,
+    activeLessonProgress.lessonId
+  ].join("_");
+
+  try{
+    await setDoc(
+      doc(db, "progress", progressId),
+      {
+        userId: currentUser.uid,
+        courseId: currentCourse.id,
+        courseTitle: currentCourse.title,
+        lessonId: activeLessonProgress.lessonId,
+        lessonTitle,
+        displayName: currentUser.displayName || "",
+        email: currentUser.email || "",
+        className: currentClassName,
+        grade: currentGrade,
+        watchedSeconds: Math.round(activeLessonProgress.watchedSeconds),
+        lastPositionSeconds: Math.round(player.currentTime || 0),
+        furthestWatchedSeconds: Math.round(activeLessonProgress.furthestWatchedSeconds),
+        durationSeconds: Number.isFinite(player.duration)
+          ? Math.round(player.duration)
+          : 0,
+        completed: activeLessonProgress.completed,
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    const existing = studentProgress.find(item => item.id === progressId);
+    if(existing){
+      existing.completed = existing.completed || activeLessonProgress.completed;
+      existing.watchedSeconds = activeLessonProgress.watchedSeconds;
+      existing.lastPositionSeconds = Math.round(player.currentTime || 0);
+      existing.furthestWatchedSeconds = Math.round(activeLessonProgress.furthestWatchedSeconds);
+    }
+    else{
+      studentProgress.push({
+        id: progressId,
+        userId: currentUser.uid,
+        courseId: currentCourse.id,
+        lessonId: activeLessonProgress.lessonId,
+        completed: activeLessonProgress.completed,
+        watchedSeconds: activeLessonProgress.watchedSeconds,
+        lastPositionSeconds: Math.round(player.currentTime || 0),
+        furthestWatchedSeconds: Math.round(activeLessonProgress.furthestWatchedSeconds)
+      });
+    }
+  }
+  catch(error){
+    console.error("進捗保存エラー", error);
+  }
+
+}
+
+
+function setPlaybackRate(value){
+
+  const rate = Number(value);
+  if(![0.75, 1, 1.25, 1.5, 1.75, 2].includes(rate))
+    return;
+
+  $("videoPlayer").playbackRate = rate;
+  localStorage.setItem("webCoursePlaybackRate", String(rate));
+
+}
+
+
+function resumeLesson(){
+
+  const player = $("videoPlayer");
+  if(!activeLessonProgress)
+    return;
+
+  const resumeAt = activeLessonProgress.completed
+    ? 0
+    : Math.min(
+        activeLessonProgress.lastPositionSeconds,
+        activeLessonProgress.furthestWatchedSeconds
+      );
+  player.currentTime = resumeAt;
+  player.play().catch(() => {});
+
+}
+
+
+function renderChapters(lesson){
+
+  const list = $("chapterList");
+  list.innerHTML = "";
+  const chapters = Array.isArray(lesson.chapters)
+    ? lesson.chapters
+    : [];
+
+  chapters.forEach(chapter => {
+    const button = document.createElement("button");
+    button.className = "chapter-button";
+    button.disabled = Boolean(
+      !activeLessonProgress.completed &&
+      chapter.seconds > activeLessonProgress.furthestWatchedSeconds + 1
+    );
+    const time = document.createElement("span");
+    time.textContent = formatTimecode(chapter.seconds);
+    button.append(time, document.createTextNode(chapter.title));
+    button.onclick = () => jumpToChapter(chapter.seconds);
+    list.appendChild(button);
+  });
+
+  if(!chapters.length){
+    const empty = document.createElement("span");
+    empty.className = "muted";
+    empty.textContent = "チャプターは登録されていません。";
+    list.appendChild(empty);
+  }
+
+}
+
+
+function jumpToChapter(seconds){
+
+  if(
+    !activeLessonProgress.completed &&
+    seconds > activeLessonProgress.furthestWatchedSeconds + 1
+  )
+    return;
+
+  const player = $("videoPlayer");
+  player.currentTime = seconds;
+  player.play().catch(() => {});
+
+}
+
+
 /* ==========================================
 動画画面から講座へ
 ========================================== */
@@ -1835,6 +2653,12 @@ function goCourse(){
   if(
     currentCourse
   ){
+
+    const player = $("videoPlayer");
+    if(!player.paused)
+      player.pause();
+    else
+      saveLessonProgress(false);
 
     openCourse(
       currentCourse.id
@@ -1855,7 +2679,8 @@ async function loadTeacherData(){
 
     const [
       courseSnapshot,
-      userSnapshot
+      userSnapshot,
+      progressSnapshot
     ] =
     await Promise.all([
 
@@ -1871,6 +2696,10 @@ async function loadTeacherData(){
           db,
           "users"
         )
+      ),
+
+      getDocs(
+        collection(db, "progress")
       )
 
     ]);
@@ -1888,6 +2717,19 @@ async function loadTeacherData(){
         })
       );
 
+    const lessonCounts = await Promise.all(
+      courses.map(async course => {
+        const lessons = await getDocs(
+          query(
+            collection(db, "courses", course.id, "lessons"),
+            where("published", "==", true)
+          )
+        );
+        return [course.id, lessons.size];
+      })
+    );
+    publishedLessonCounts = Object.fromEntries(lessonCounts);
+
 
     users =
       userSnapshot.docs.map(
@@ -1900,6 +2742,12 @@ async function loadTeacherData(){
 
         })
       );
+
+    teacherProgress =
+      progressSnapshot.docs.map(document => ({
+        id: document.id,
+        ...document.data()
+      }));
 
 
   }
@@ -1927,6 +2775,7 @@ function teacherTab(
     "dashboardTab",
     "coursesTab",
     "usersTab",
+    "progressTab",
     "noticeTab",
     "settingsTab"
   ]
@@ -1948,6 +2797,9 @@ function teacherTab(
 
     users:
       "usersTab",
+
+    progress:
+      "progressTab",
 
     notice:
       "noticeTab",
@@ -1990,6 +2842,13 @@ function teacherTab(
 
     renderUsers();
 
+  }
+
+  if(
+    tab ===
+    "progress"
+  ){
+    renderProgressReport();
   }
 
 
@@ -2057,9 +2916,225 @@ function renderDashboard(){
 }
 
 
+function buildProgressReport(){
+
+  const groupBy = $("progressGroup").value;
+  const groupLabels = {
+    className: "クラス",
+    grade: "学年",
+    course: "講座"
+  };
+  const groups = new Map();
+  const progressByPair = new Map();
+
+  teacherProgress.forEach(item => {
+    const key = `${item.userId}|${item.courseId}`;
+    const progress = progressByPair.get(key) || {
+      completed: 0,
+      inProgress: 0
+    };
+    if(item.completed)
+      progress.completed += 1;
+    else if(Number(item.watchedSeconds) > 0)
+      progress.inProgress += 1;
+    progressByPair.set(key, progress);
+  });
+
+  const students = users.filter(user => user.role === "student");
+  const reportCourses = courses.filter(course =>
+    course.published && Number(publishedLessonCounts[course.id]) > 0
+  );
+
+  students.forEach(user => {
+    reportCourses.forEach(course => {
+      const targetClasses = Array.isArray(course.targetClasses)
+        ? course.targetClasses
+        : [];
+      const targetStudents = Array.isArray(course.targetStudents)
+        ? course.targetStudents
+        : [];
+
+      const hasAnyTarget = targetClasses.length > 0 || targetStudents.length > 0;
+      const matchesTarget = !hasAnyTarget
+        || targetClasses.includes(user.className || "")
+        || targetStudents.includes(user.id);
+
+      if(!matchesTarget)
+        return;
+
+      const groupName = groupBy === "course"
+        ? course.title || "名称未設定"
+        : (user[groupBy] || "未設定");
+      const group = groups.get(groupName) || {
+        name: groupName,
+        students: new Set(),
+        completed: 0,
+        inProgress: 0,
+        total: 0
+      };
+
+      group.students.add(user.id);
+      const totalLessons = Number(publishedLessonCounts[course.id]);
+      const progress = progressByPair.get(`${user.id}|${course.id}`) || {};
+      const completed = Math.min(totalLessons, progress.completed || 0);
+      group.total += totalLessons;
+      group.completed += completed;
+      group.inProgress += Math.min(
+        totalLessons - completed,
+        progress.inProgress || 0
+      );
+      groups.set(groupName, group);
+    });
+  });
+
+  return {
+    heading: groupLabels[groupBy],
+    rows: [...groups.values()]
+      .map(group => ({
+        name: group.name,
+        students: group.students.size,
+        completed: group.completed,
+        inProgress: group.inProgress,
+        total: group.total,
+        rate: group.total
+          ? Math.round(group.completed / group.total * 100)
+          : 0
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name, "ja"))
+  };
+
+}
+
+
+function renderProgressReport(){
+
+  const report = buildProgressReport();
+  const body = $("progressTable");
+  $("progressGroupHeading").textContent = report.heading;
+  lastProgressReport = report.rows;
+  body.innerHTML = "";
+
+  if(!report.rows.length){
+    body.innerHTML = '<tr><td colspan="6" class="empty">集計できる進捗データがありません。</td></tr>';
+    return;
+  }
+
+  report.rows.forEach(row => {
+    const tr = document.createElement("tr");
+    [
+      row.name,
+      String(row.students),
+      String(row.completed),
+      String(row.inProgress),
+      String(row.total),
+      `${row.rate}%`
+    ].forEach(value => {
+      const td = document.createElement("td");
+      td.textContent = value;
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+
+}
+
+
+function exportProgressCsv(){
+
+  const report = buildProgressReport();
+  const rows = [
+    [report.heading, "生徒数", "完了動画", "視聴中", "対象動画", "完了率"],
+    ...report.rows.map(row => [
+      row.name,
+      row.students,
+      row.completed,
+      row.inProgress,
+      row.total,
+      `${row.rate}%`
+    ])
+  ];
+  const csv = "\uFEFF" + rows
+    .map(row => row.map(value =>
+      `"${String(value).replace(/"/g, '""')}"`
+    ).join(","))
+    .join("\r\n");
+  const url = URL.createObjectURL(
+    new Blob([csv], { type: "text/csv;charset=utf-8" })
+  );
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `受講進捗_${$("progressGroup").value}_${new Date().toISOString().slice(0, 10)}.csv`;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+}
+
+
 /* ==========================================
 講座モーダル
 ========================================== */
+
+function renderClassOptions(select, selectedClasses){
+
+  const classes = [...new Set(
+    users
+      .filter(user => user.role === "student")
+      .map(user => typeof user.className === "string" ? user.className.trim() : "")
+      .filter(Boolean)
+  )].sort((a, b) => a.localeCompare(b, "ja"));
+
+  select.innerHTML = "";
+  classes.forEach(className => {
+    const option = document.createElement("option");
+    option.value = className;
+    option.textContent = className;
+    option.selected = selectedClasses.includes(className);
+    select.appendChild(option);
+  });
+
+  if(!classes.length){
+    const option = document.createElement("option");
+    option.disabled = true;
+    option.textContent = "生徒のクラス登録後に選択できます";
+    select.appendChild(option);
+  }
+
+}
+
+function renderStudentOptions(select, selectedStudentIds){
+
+  const students = users
+    .filter(user => user.role === "student")
+    .map(user => ({
+      id: user.id || user.uid || "",
+      displayName: typeof user.displayName === "string" ? user.displayName.trim() : "",
+      className: typeof user.className === "string" ? user.className.trim() : "",
+      email: typeof user.email === "string" ? user.email.trim() : ""
+    }))
+    .filter(student => student.id)
+    .sort((a, b) => {
+      const aName = a.displayName || a.email || a.id;
+      const bName = b.displayName || b.email || b.id;
+      return aName.localeCompare(bName, "ja");
+    });
+
+  select.innerHTML = "";
+  students.forEach(student => {
+    const option = document.createElement("option");
+    option.value = student.id;
+    option.textContent = `${student.displayName || student.email || student.id}${student.className ? ` (${student.className})` : ""}`;
+    option.selected = selectedStudentIds.includes(student.id);
+    select.appendChild(option);
+  });
+
+  if(!students.length){
+    const option = document.createElement("option");
+    option.disabled = true;
+    option.textContent = "生徒登録後に選択できます";
+    select.appendChild(option);
+  }
+
+}
 
 function openCourseModal(){
 
@@ -2081,6 +3156,9 @@ function openCourseModal(){
   $("courseFormPublished")
     .value =
     "false";
+
+  renderClassOptions($("courseFormTargets"), []);
+  renderStudentOptions($("courseFormStudents"), []);
 
 
   $("courseModal")
@@ -2126,6 +3204,12 @@ async function submitCourse(){
       .value ===
       "true";
 
+  const targetClasses = [...$("courseFormTargets").selectedOptions]
+    .map(option => option.value);
+
+  const targetStudents = [...$("courseFormStudents").selectedOptions]
+    .map(option => option.value);
+
 
   if(!title){
 
@@ -2158,6 +3242,10 @@ async function submitCourse(){
           published:
             published,
 
+          targetClasses,
+
+          targetStudents,
+
           lessonCount:
             0,
 
@@ -2184,6 +3272,10 @@ async function submitCourse(){
 
       published:
         published,
+
+      targetClasses,
+
+      targetStudents,
 
       lessonCount:
         0
@@ -2286,6 +3378,13 @@ function renderTeacherCourses(){
           本
         </p>
 
+        <label class="course-target-label">配信するクラス</label>
+        <select class="course-targets" multiple size="4"></select>
+
+        <label class="course-target-label">配信する生徒</label>
+        <select class="course-target-students" multiple size="4"></select>
+        <button class="save-course-targets">対象を保存</button>
+
         <div class="actions">
 
           <button
@@ -2316,10 +3415,32 @@ function renderTeacherCourses(){
 
       `;
 
+      const targetSelect = card.querySelector(".course-targets");
+      const studentTargetSelect = card.querySelector(".course-target-students");
+      renderClassOptions(
+        targetSelect,
+        Array.isArray(course.targetClasses) ? course.targetClasses : []
+      );
+      renderStudentOptions(
+        studentTargetSelect,
+        Array.isArray(course.targetStudents) ? course.targetStudents : []
+      );
+      card.querySelector(".save-course-targets").onclick = async event => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        course.targetClasses = [...targetSelect.selectedOptions]
+          .map(option => option.value);
+        course.targetStudents = [...studentTargetSelect.selectedOptions]
+          .map(option => option.value);
+        await saveCourse(course);
+        renderTeacherCourses();
+        status("配信対象を保存しました。");
+      };
+
 
       const buttons =
         card.querySelectorAll(
-          "button"
+          ".actions button"
         );
 
 
@@ -2435,7 +3556,6 @@ async function saveCourse(
         course.id
       ),
       {
-
         title:
           course.title,
 
@@ -2445,6 +3565,16 @@ async function saveCourse(
 
         published:
           !!course.published,
+
+        targetClasses:
+          Array.isArray(course.targetClasses)
+            ? course.targetClasses
+            : [],
+
+        targetStudents:
+          Array.isArray(course.targetStudents)
+            ? course.targetStudents
+            : [],
 
         lessonCount:
           course.lessonCount ||
@@ -2486,6 +3616,47 @@ async function saveCourse(
 /* ==========================================
 動画管理
 ========================================== */
+
+function formatTimecode(seconds){
+
+  const minutes = Math.floor(Number(seconds) / 60);
+  const remainder = Math.floor(Number(seconds) % 60);
+  return `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+
+}
+
+
+function formatChapters(chapters){
+
+  return chapters
+    .filter(chapter => Number.isFinite(Number(chapter.seconds)) && chapter.title)
+    .map(chapter => `${formatTimecode(chapter.seconds)} ${chapter.title}`)
+    .join("\n");
+
+}
+
+
+function parseChapters(value){
+
+  return value
+    .split("\n")
+    .map(line => line.trim())
+    .filter(Boolean)
+    .map(line => {
+      const match = line.match(/^(\d+):([0-5]\d)\s+(.+)$/);
+      if(!match)
+        return null;
+
+      return {
+        seconds: Number(match[1]) * 60 + Number(match[2]),
+        title: match[3].trim()
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.seconds - b.seconds);
+
+}
+
 
 async function toggleLessonManager(
   course,
@@ -2634,6 +3805,15 @@ async function toggleLessonManager(
           </textarea>
 
           <label>
+            チャプター目次（MM:SS タイトルを1行ずつ）
+          </label>
+
+          <textarea
+            class="lessonChapters"
+            placeholder="00:00 はじめに&#10;02:15 基本の考え方">
+          </textarea>
+
+          <label>
             公開状態
           </label>
 
@@ -2672,6 +3852,11 @@ async function toggleLessonManager(
         ).value =
           lesson.note ||
           "";
+
+        box.querySelector(
+          ".lessonChapters"
+        ).value =
+          formatChapters(lesson.chapters || []);
 
 
         box.querySelector(
@@ -2715,6 +3900,13 @@ async function toggleLessonManager(
                   box.querySelector(
                     ".lessonNote"
                   ).value,
+
+                chapters:
+                  parseChapters(
+                    box.querySelector(
+                      ".lessonChapters"
+                    ).value
+                  ),
 
                 published:
                   box.querySelector(
@@ -3011,6 +4203,9 @@ function renderUsers(){
         );
 
 
+      const name = document.createElement("td");
+      name.textContent = user.displayName || "";
+
       const email =
         document.createElement(
           "td"
@@ -3020,6 +4215,18 @@ function renderUsers(){
       email.textContent =
         user.email ||
         "";
+
+      const grade = document.createElement("td");
+      const gradeInput = document.createElement("input");
+      gradeInput.value = user.grade || "";
+      gradeInput.setAttribute("aria-label", `${user.email || "ユーザー"}の学年`);
+      grade.appendChild(gradeInput);
+
+      const className = document.createElement("td");
+      const classInput = document.createElement("input");
+      classInput.value = user.className || "";
+      classInput.setAttribute("aria-label", `${user.email || "ユーザー"}のクラス`);
+      className.appendChild(classInput);
 
 
       const role =
@@ -3036,10 +4243,76 @@ function renderUsers(){
         :
         "生徒";
 
+      const accountState = document.createElement("td");
+      accountState.textContent = user.role === "student"
+        ? (user.disabled === true ? "停止中" : "利用中")
+        : "対象外";
+
+      const actions = document.createElement("td");
+      const saveButton = document.createElement("button");
+      saveButton.textContent = "保存";
+      saveButton.onclick = async () => {
+        saveButton.disabled = true;
+        try{
+          const profile = {
+            grade: gradeInput.value.trim(),
+            className: classInput.value.trim()
+          };
+          await setDoc(
+            doc(db, "users", user.id),
+            profile,
+            { merge: true }
+          );
+          Object.assign(user, profile);
+          status("プロフィールを保存しました。");
+          renderProgressReport();
+        }
+        catch(error){
+          console.error("プロフィール保存エラー", error);
+          status("プロフィールを保存できませんでした。");
+        }
+        finally{
+          saveButton.disabled = false;
+        }
+      };
+      actions.appendChild(saveButton);
+
+      if(user.role === "student"){
+        const toggleButton = document.createElement("button");
+        toggleButton.className = user.disabled === true ? "secondary" : "danger";
+        toggleButton.textContent = user.disabled === true ? "再開" : "停止";
+        toggleButton.onclick = async () => {
+          const nextDisabled = user.disabled !== true;
+          const action = nextDisabled ? "停止" : "再開";
+          if(!confirm(`${user.email || "この生徒"}のアカウントを${action}しますか？`))
+            return;
+
+          toggleButton.disabled = true;
+          try{
+            const setUserDisabled = httpsCallable(functions, "setUserDisabled");
+            await setUserDisabled({ userId: user.id, disabled: nextDisabled });
+            user.disabled = nextDisabled;
+            renderUsers();
+            status(nextDisabled ? "アカウントを停止しました。" : "アカウントを再開しました。");
+          }
+          catch(error){
+            console.error("アカウント状態更新エラー", error);
+            status(error.message || "アカウント状態を更新できませんでした。");
+            toggleButton.disabled = false;
+          }
+        };
+        actions.appendChild(toggleButton);
+      }
+
 
       row.append(
+        name,
         email,
-        role
+        grade,
+        className,
+        role,
+        accountState,
+        actions
       );
 
 
@@ -3056,7 +4329,7 @@ function renderUsers(){
   ){
 
     body.innerHTML =
-      '<tr><td colspan="2">ユーザーがありません。</td></tr>';
+      '<tr><td colspan="7">ユーザーがありません。</td></tr>';
 
   }
 
@@ -3068,6 +4341,12 @@ function openUserModal(){
   clearError(
     "userFormError"
   );
+
+  $("userFormName").value = "";
+  $("userFormGrade").value = "";
+  $("userFormClass").value = "";
+  $("userFormEmail").value = "";
+  $("userFormPassword").value = "";
 
 
   $("userModal")
@@ -3086,12 +4365,43 @@ function closeUserModal(){
 }
 
 
-function submitUser(){
+async function submitUser(){
 
-  showError(
-    "userFormError",
-    "ユーザーのAuthentication作成にはFirebase Functionsが必要です。Functions接続後に利用できます。"
-  );
+  clearError("userFormError");
+  const email = $("userFormEmail").value.trim();
+  const password = $("userFormPassword").value;
+  const role = $("userFormRole").value;
+
+  if(!email || password.length < 6){
+    showError("userFormError", "メールアドレスと6文字以上のパスワードを入力してください。");
+    return;
+  }
+
+  try{
+    const createUser = httpsCallable(functions, "createUser");
+    await createUser({
+      email,
+      password,
+      role,
+      displayName: $("userFormName").value.trim(),
+      grade: $("userFormGrade").value.trim(),
+      className: $("userFormClass").value.trim()
+    });
+
+    closeUserModal();
+    await loadTeacherData();
+    renderUsers();
+    renderDashboard();
+    renderNoticeUsers();
+    status("ユーザーを登録しました。");
+  }
+  catch(error){
+    console.error("ユーザー登録エラー", error);
+    showError(
+      "userFormError",
+      error.message || "ユーザーを登録できませんでした。"
+    );
+  }
 
 }
 
@@ -3137,7 +4447,7 @@ function renderNoticeUsers(){
 }
 
 
-function openNotice(){
+async function openNotice(){
 
   const user =
     users.find(
@@ -3179,14 +4489,37 @@ function openNotice(){
 
   }
 
+  let qrImageUrl;
+  try{
+    const issueTicket = httpsCallable(functions, "issueQrLogin");
+    const response = await issueTicket({ userId: user.id });
+    const loginUrl = new URL(location.pathname, location.origin);
+    loginUrl.searchParams.set("qrLogin", response.data.ticket);
 
-  const role =
-    user.role ===
-    "teacher"
-    ?
-    "先生・管理者"
-    :
-    "生徒";
+    if(!window.QRCode)
+      throw new Error("QRコード生成ライブラリを読み込めませんでした。");
+
+    const qrContainer = document.createElement("div");
+    document.body.appendChild(qrContainer);
+    new QRCode(qrContainer, {
+      text: loginUrl.toString(),
+      width: 220,
+      height: 220,
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    const canvas = qrContainer.querySelector("canvas");
+    const image = qrContainer.querySelector("img");
+    qrImageUrl = canvas?.toDataURL("image/png") || image?.src;
+    qrContainer.remove();
+    if(!qrImageUrl)
+      throw new Error("QRコードを生成できませんでした。");
+  }
+  catch(error){
+    console.error("通知書QR生成エラー", error);
+    popup.close();
+    alert(error.message || "ログインQRを発行できませんでした。");
+    return;
+  }
 
 
   const today =
@@ -3252,6 +4585,13 @@ body{
   text-align:center;
   font-size:26px;
   margin:35px 0;
+}
+
+.qr-code{
+  display:block;
+  width:220px;
+  height:220px;
+  margin:20px auto;
 }
 
 .intro{
@@ -3330,6 +4670,8 @@ WEB講座
 WEB講座へのログイン時にご利用ください。
 </p>
 
+<img class="qr-code" src="${qrImageUrl}" alt="ログイン用QRコード">
+
 <table class="info">
 
 <tr>
@@ -3342,10 +4684,12 @@ WEB講座へのログイン時にご利用ください。
 <td>${escapeHtml(user.email)}</td>
 </tr>
 
+${user.className ? `
 <tr>
-<th>権限</th>
-<td>${role}</td>
+<th>クラス</th>
+<td>${escapeHtml(user.className)}</td>
 </tr>
+` : ""}
 
 <tr>
 <th>発行日</th>
@@ -3364,10 +4708,6 @@ WEB講座へのログイン時にご利用ください。
 </p>
 
 <p>
-パスワードは安全上、この通知書には
-保存・再表示されません。
-</p>
-
 </div>
 
 <p>
@@ -3411,63 +4751,210 @@ onclick="window.print()">
 ロゴ
 ========================================== */
 
-function saveLogoPreview(){
+function applySiteLogo(url){
 
-  const file =
-    $("logoFile")
-      .files[0];
-
-
-  if(
-    !file
-  ){
-
-    alert(
-      "ロゴ画像を選択してください。"
-    );
-
+  if(!url)
     return;
 
+  $("siteLogo").src = url;
+  $("siteLogo").classList.remove("hidden");
+  $("siteBrand").classList.remove("hidden");
+  $("siteFavicon").href = url;
+  $("siteFavicon").removeAttribute("type");
+
+}
+
+
+function isCanvaEmbedUrl(url){
+  try{
+    const parsed = new URL(url);
+    const host = parsed.hostname.toLowerCase();
+    const path = parsed.pathname.toLowerCase();
+    return host.includes("canva.com") && path.includes("/design/") && (path.includes("/watch") || parsed.searchParams.get("embed") !== null);
+  }
+  catch(error){
+    return false;
+  }
+}
+
+function normalizeCanvaEmbedUrl(url){
+  try{
+    const parsed = new URL(url);
+    if(parsed.hostname.toLowerCase().includes("canva.com") && parsed.pathname.toLowerCase().includes("/design/")){
+      parsed.searchParams.set("embed", "");
+      return parsed.toString();
+    }
+    return url;
+  }
+  catch(error){
+    return url;
+  }
+}
+
+function applyGuidanceVideo(url){
+
+  guidanceVideoUrl = typeof url === "string" ? url.trim() : "";
+  const player = $("guidanceVideo");
+  const mediaContainer = $("guidanceMediaContainer");
+  const fallback = $("guideFallback");
+
+  if(!guidanceVideoUrl){
+    player.pause();
+    player.removeAttribute("src");
+    player.load();
+    player.classList.add("hidden");
+    if(mediaContainer){
+      mediaContainer.innerHTML = "";
+      mediaContainer.classList.add("hidden");
+    }
+    fallback.classList.remove("hidden");
+    return;
   }
 
+  if(isCanvaEmbedUrl(guidanceVideoUrl)){
+    const embedUrl = normalizeCanvaEmbedUrl(guidanceVideoUrl);
+    if(mediaContainer){
+      mediaContainer.innerHTML = `
+        <div style="position: relative; width: 100%; height: 0; padding-top: 56.2500%; padding-bottom: 0; box-shadow: 0 2px 8px 0 rgba(63,69,81,0.16); margin-top: 1.6em; margin-bottom: 0.9em; overflow: hidden; border-radius: 8px; will-change: transform;">
+          <iframe loading="lazy" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; border: none; padding: 0; margin: 0;" src="${embedUrl}" allowfullscreen="allowfullscreen" allow="fullscreen"></iframe>
+        </div>
+      `;
+      mediaContainer.classList.remove("hidden");
+    }
+    player.pause();
+    player.removeAttribute("src");
+    player.load();
+    player.classList.add("hidden");
+    fallback.classList.add("hidden");
+    return;
+  }
 
-  const reader =
-    new FileReader();
+  if(mediaContainer){
+    mediaContainer.innerHTML = "";
+    mediaContainer.classList.add("hidden");
+  }
+  player.src = guidanceVideoUrl;
+  player.classList.remove("hidden");
+  fallback.classList.add("hidden");
 
-
-  reader.onload =
-    event => {
-
-      $("siteLogo")
-        .src =
-        event.target.result;
-
-
-      $("siteLogo")
-        .classList
-        .remove("hidden");
-
-
-      /*
-      タイトルはロゴの横に
-      常に残す
-      */
-
-      $("siteBrand")
-        .classList
-        .remove("hidden");
-
-
-      status(
-        "ロゴを反映しました。"
-      );
-
-    };
+}
 
 
-  reader.readAsDataURL(
-    file
-  );
+async function loadManual(){
+
+  try{
+    const settings = await getDoc(doc(db, "settings", "site"));
+    const data = settings.exists() ? settings.data() : {};
+    applySiteLogo(data.logoUrl);
+    applyGuidanceVideo(data.guidanceVideoUrl);
+    if($("guidanceVideoUrl"))
+      $("guidanceVideoUrl").value = data.guidanceVideoUrl || "";
+  }
+  catch(error){
+    console.warn("サイト設定の読み込みエラー", error);
+  }
+
+}
+
+
+async function saveGuidanceVideoUrl(){
+
+  const input = $("guidanceVideoUrl");
+  const value = input.value.trim();
+  if(value){
+    try{
+      const url = new URL(value);
+      if(url.protocol !== "https:"){
+        throw new Error("動画URLはHTTPSである必要があります。");
+      }
+      const host = url.hostname.toLowerCase();
+      const path = url.pathname.toLowerCase();
+      const isCanvaShare = host.includes("canva.com") && path.includes("/design/") && (path.includes("/watch") || url.searchParams.get("embed") !== null);
+      const isLikelyVideoSource = /\.(mp4|webm|ogg|mov|m4v)(?:$|[?#])/.test(url.pathname) || host.includes("cloudinary") || host.includes("video") || host.includes("cdn") || host.includes("drive") || host.includes("dropbox") || isCanvaShare;
+      if(!isLikelyVideoSource){
+        console.warn("ガイダンスURLのホストは動画ソースとして推定されませんでした。", url.href);
+      }
+    }
+    catch(error){
+      alert(error.message || "動画URLが正しくありません。");
+      return;
+    }
+  }
+
+  try{
+    await setDoc(
+      doc(db, "settings", "site"),
+      {
+        guidanceVideoUrl: value,
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+    applyGuidanceVideo(value);
+    status(value ? "ガイダンス動画URLを保存しました。" : "ガイダンス動画URLを削除しました。");
+  }
+  catch(error){
+    console.error("ガイダンス動画URL保存エラー", error);
+    alert("ガイダンス動画URLを保存できませんでした。");
+  }
+
+}
+
+
+async function saveLogoPreview(){
+
+  const file = $("logoFile").files[0];
+  if(!file){
+    alert("ロゴ画像を選択してください。");
+    return;
+  }
+  if(!file.type.startsWith("image/")){
+    alert("画像ファイルを選択してください。");
+    return;
+  }
+
+  const button = $("saveLogoButton");
+  button.disabled = true;
+  try{
+    const signatureRequest = httpsCallable(functions, "getCloudinaryUploadSignature");
+    const signatureResponse = await signatureRequest({
+      resourceType: "image",
+      folder: "web-course/site"
+    });
+    const signature = signatureResponse.data;
+    const form = new FormData();
+    form.append("file", file);
+    form.append("api_key", signature.apiKey);
+    form.append("timestamp", String(signature.timestamp));
+    form.append("folder", signature.folder);
+    form.append("signature", signature.signature);
+
+    const uploadResponse = await fetch(
+      `https://api.cloudinary.com/v1_1/${encodeURIComponent(signature.cloudName)}/image/upload`,
+      { method: "POST", body: form }
+    );
+    const uploaded = await uploadResponse.json();
+    if(!uploadResponse.ok || !uploaded.secure_url)
+      throw new Error(uploaded.error?.message || "ロゴ画像をアップロードできませんでした。");
+
+    await setDoc(
+      doc(db, "settings", "site"),
+      {
+        logoUrl: uploaded.secure_url,
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+    applySiteLogo(uploaded.secure_url);
+    status("ロゴとfaviconを保存しました。");
+  }
+  catch(error){
+    console.error("ロゴ保存エラー", error);
+    alert(error.message || "ロゴを保存できませんでした。");
+  }
+  finally{
+    button.disabled = false;
+  }
 
 }
 
@@ -3524,6 +5011,39 @@ function escapeAttribute(
 window.login =
   login;
 
+window.googleLogin =
+  googleLogin;
+
+window.startQrScanner =
+  startQrScanner;
+
+window.stopQrScanner =
+  stopQrScanner;
+
+window.sendPasswordReset =
+  sendPasswordReset;
+
+window.openFaq =
+  openFaq;
+
+window.closeFaq =
+  closeFaq;
+
+window.openGuidance =
+  openGuidance;
+
+window.startGuidance =
+  startGuidance;
+
+window.pauseGuidance =
+  pauseGuidance;
+
+window.setPlaybackRate =
+  setPlaybackRate;
+
+window.resumeLesson =
+  resumeLesson;
+
 window.logout =
   logout;
 
@@ -3535,6 +5055,12 @@ window.goCourse =
 
 window.teacherTab =
   teacherTab;
+
+window.renderProgressReport =
+  renderProgressReport;
+
+window.exportProgressCsv =
+  exportProgressCsv;
 
 window.openCourseModal =
   openCourseModal;
@@ -3568,6 +5094,24 @@ window.openNotice =
 
 window.saveLogoPreview =
   saveLogoPreview;
+
+window.saveGuidanceVideoUrl =
+  saveGuidanceVideoUrl;
+
+window.loadManual =
+  loadManual;
+
+void loadManual();
+
+const startupQrTicket =
+  new URLSearchParams(location.search).get("qrLogin");
+
+if(startupQrTicket){
+  redeemQrLogin(startupQrTicket).catch(error => {
+    console.error("QRログインエラー", error);
+    showError("loginError", error.message || "QRコードが無効か期限切れです。");
+  });
+}
 
 </script>
 

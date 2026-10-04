@@ -44,7 +44,8 @@ async function requireTeacher(request) {
 
   if (
     !userDoc.exists ||
-    userDoc.data().role !== "teacher"
+    userDoc.data().role !== "teacher" ||
+    userDoc.data().disabled === true
   ) {
     throw new HttpsError(
       "permission-denied",
@@ -76,6 +77,21 @@ exports.createUser = onCall(
         : "";
 
     const role = data.role;
+
+    const className =
+      typeof data.className === "string"
+        ? data.className.trim().slice(0, 80)
+        : "";
+
+    const grade =
+      typeof data.grade === "string"
+        ? data.grade.trim().slice(0, 40)
+        : "";
+
+    const displayName =
+      typeof data.displayName === "string"
+        ? data.displayName.trim().slice(0, 120)
+        : "";
 
 
     if (!email) {
@@ -120,6 +136,10 @@ exports.createUser = onCall(
         .set({
           email,
           role,
+          className,
+          grade,
+          displayName,
+          disabled: false,
           createdAt:
             admin.firestore.FieldValue.serverTimestamp()
         });
@@ -168,6 +188,76 @@ exports.createUser = onCall(
 
 
 /* ================================
+   生徒アカウント停止・再開
+================================ */
+
+exports.setUserDisabled = onCall(
+  async (request) => {
+
+    await requireTeacher(request);
+
+    const userId = request.data?.userId;
+    const disabled = request.data?.disabled;
+
+    if(typeof userId !== "string" || !userId || typeof disabled !== "boolean"){
+      throw new HttpsError(
+        "invalid-argument",
+        "対象ユーザーと停止状態を指定してください。"
+      );
+    }
+
+    if(userId === request.auth.uid){
+      throw new HttpsError(
+        "failed-precondition",
+        "自分のアカウントは停止できません。"
+      );
+    }
+
+    const profileRef = db.collection("users").doc(userId);
+    const profileSnapshot = await profileRef.get();
+    if(!profileSnapshot.exists){
+      throw new HttpsError("not-found", "ユーザーが見つかりません。");
+    }
+    if(profileSnapshot.data().role !== "student"){
+      throw new HttpsError(
+        "failed-precondition",
+        "先生アカウントはこの画面から変更できません。"
+      );
+    }
+
+    const profileUpdate = {
+      disabled,
+      disabledAt: disabled
+        ? admin.firestore.FieldValue.serverTimestamp()
+        : null,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    try{
+      if(disabled)
+        await profileRef.set(profileUpdate, { merge: true });
+
+      await admin.auth().updateUser(userId, { disabled });
+
+      if(disabled)
+        await admin.auth().revokeRefreshTokens(userId);
+      else
+        await profileRef.set(profileUpdate, { merge: true });
+
+      return { success: true, userId, disabled };
+    }
+    catch(error){
+      console.error("生徒アカウント状態更新エラー", error);
+      throw new HttpsError(
+        "internal",
+        "アカウント状態を更新できませんでした。"
+      );
+    }
+  }
+);
+
+
+/* ================================
    Cloudinary署名
 ================================ */
 
@@ -190,8 +280,8 @@ exports.getCloudinaryUploadSignature =
 
 
       const resourceType =
-        data.resourceType === "image"
-          ? "image"
+        ["image", "video", "raw"].includes(data.resourceType)
+          ? data.resourceType
           : "video";
 
 
@@ -263,3 +353,69 @@ exports.getCloudinaryUploadSignature =
 
     }
   );
+
+
+/* ================================
+   QRログイン
+================================ */
+
+exports.issueQrLogin = onCall(
+  async (request) => {
+    await requireTeacher(request);
+
+    const userId = request.data?.userId;
+    if (typeof userId !== "string" || !userId) {
+      throw new HttpsError("invalid-argument", "ユーザーを指定してください。");
+    }
+
+    const userDoc = await db.collection("users").doc(userId).get();
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "ユーザーが見つかりません。");
+    }
+    if (userDoc.data().disabled === true) {
+      throw new HttpsError("failed-precondition", "停止中のアカウントにはログインQRを発行できません。");
+    }
+
+    const ticket = crypto.randomBytes(32).toString("base64url");
+    const ticketId = crypto.createHash("sha256").update(ticket).digest("hex");
+
+    await db.collection("qrLoginTickets").doc(ticketId).create({
+      uid: userId,
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    return { ticket };
+  }
+);
+
+
+exports.redeemQrLogin = onCall(
+  async (request) => {
+    const ticket = request.data?.ticket;
+    if (typeof ticket !== "string" || !/^[A-Za-z0-9_-]{40,60}$/.test(ticket)) {
+      throw new HttpsError("invalid-argument", "QRコードが正しくありません。");
+    }
+
+    const ticketId = crypto.createHash("sha256").update(ticket).digest("hex");
+    const ticketRef = db.collection("qrLoginTickets").doc(ticketId);
+    const uid = await db.runTransaction(async (transaction) => {
+      const ticketDoc = await transaction.get(ticketRef);
+      if (!ticketDoc.exists) {
+        throw new HttpsError("permission-denied", "QRコードは無効です。");
+      }
+
+      const data = ticketDoc.data();
+      if (data.usedAt) {
+        throw new HttpsError("permission-denied", "QRコードは使用済みです。");
+      }
+
+      transaction.update(ticketRef, {
+        usedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+      return data.uid;
+    });
+
+    const customToken = await admin.auth().createCustomToken(uid);
+    return { customToken };
+  }
+);
